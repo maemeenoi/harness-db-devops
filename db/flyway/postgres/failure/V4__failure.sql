@@ -1,0 +1,1 @@
+ALTER TABLE shop.customers ALTER COLUMN made_up_column TYPE INT;

@@ -1,0 +1,1 @@
+ALTER TABLE shop.customers ADD CONSTRAINT PK_customers PRIMARY KEY (customer_id);
