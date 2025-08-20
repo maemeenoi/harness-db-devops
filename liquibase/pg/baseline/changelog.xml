@@ -1,11 +1,46 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
-  <changeSet id="p1-baseline" author="rg">
-    <sqlFile path="../../../sql/postgres/baseline/V1__baseline.sql" relativeToChangelogFile="true"/>
-    <rollback>
-      <!-- Rollback SQL here if needed -->
-    </rollback>
-  </changeSet>
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="V1-baseline" author="redgate">
+        <createTable tableName="customer_feedback" schemaName="sales">
+            <column name="feedback_id" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="customer_id" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rating" type="INT"/>
+            <column name="feedback_text" type="TEXT"/>
+            <column name="submitted_at" type="DATETIME" defaultValueComputed="CURRENT_TIMESTAMP"/>
+            <column name="status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint 
+            baseTableName="customer_feedback"
+            baseColumnNames="customer_id"
+            referencedTableName="Customer"
+            referencedColumnNames="CustomerID"
+            constraintName="fk_customer_feedback_customer"
+            baseTableSchemaName="sales"
+            referencedTableSchemaName="sales"/>
+
+        <createView viewName="customer_feedback_summary" schemaName="sales">
+            SELECT
+                c.CustomerID,
+                c.AccountNumber,
+                f.feedback_id,
+                f.rating,
+                f.feedback_text,
+                f.submitted_at
+            FROM sales.Customer c
+            LEFT JOIN sales.customer_feedback f ON c.CustomerID = f.customer_id
+        </createView>
+    </changeSet>
+
 </databaseChangeLog>

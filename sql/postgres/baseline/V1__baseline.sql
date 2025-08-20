@@ -1,8 +1,0 @@
-CREATE SCHEMA IF NOT EXISTS shop;
-
-CREATE TABLE IF NOT EXISTS shop.customers (
-  customer_id SERIAL PRIMARY KEY,
-  full_name   VARCHAR(120) NOT NULL,
-  email       VARCHAR(255) UNIQUE,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);

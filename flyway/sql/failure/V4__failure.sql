@@ -1,1 +1,3 @@
-ALTER TABLE shop.customers ADD CONSTRAINT PK_customers PRIMARY KEY (customer_id);
+-- Intentionally fails by trying to add existing column again
+
+ALTER TABLE sales.customer_feedback ADD status VARCHAR(20) NOT NULL DEFAULT 'active';

@@ -21,10 +21,6 @@ Monorepo for Harness database DevOps demos
     - `proc/` — `V3__proc.sql`
     - `failure/` — `V4__failure.sql`
 
-- `db/sql/` — Shared SQL scripts
-  - `postgres/` and `sqlserver/` subfolders mirror the scenario structure above
-    - Useful for reference or direct execution
-
 ## Usage
 
 ### Liquibase

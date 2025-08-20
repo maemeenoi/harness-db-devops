@@ -1,11 +1,17 @@
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
-  <changeSet id="p4-failure" author="rg">
-    <sqlFile path="../../../sql/postgres/failure/V4__failure.sql" relativeToChangelogFile="true"/>
-    <rollback>
-      <!-- Rollback SQL here if needed -->
-    </rollback>
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+  http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+  <!-- V4__failure.sql (intentional error) -->
+  <changeSet id="V4-broken-script" author="redgate">
+    <addColumn tableName="customer_feedback" schemaName="sales">
+      <column name="status" type="VARCHAR(20)" defaultValue="active">
+        <constraints nullable="false"/>
+      </column>
+    </addColumn>
   </changeSet>
+
 </databaseChangeLog>

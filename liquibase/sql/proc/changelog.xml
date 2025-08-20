@@ -2,10 +2,30 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
-  <changeSet id="s3-proc" author="rg">
-    <sqlFile path="../../../sql/sqlserver/proc/V3__proc.sql" relativeToChangelogFile="true"/>
-    <rollback>
-      <!-- Rollback SQL here if needed -->
-    </rollback>
+  <!-- V3__proc.sql -->
+  <changeSet id="V3-create-proc-sqlserver" author="redgate">
+    <sql>
+      <![CDATA[
+      IF OBJECT_ID('sales.GetRecentFeedbackByRegion', 'P') IS NOT NULL
+        DROP PROCEDURE sales.GetRecentFeedbackByRegion;
+
+      EXEC ('
+      CREATE PROCEDURE sales.GetRecentFeedbackByRegion
+      AS
+      BEGIN
+          SELECT TOP 10
+              c.CustomerID,
+              c.TerritoryID,
+              f.rating,
+              f.feedback_text,
+              f.submitted_at
+          FROM sales.Customer c
+          JOIN sales.customer_feedback f ON c.CustomerID = f.customer_id
+          WHERE f.submitted_at > DATEADD(day, -30, GETUTCDATE())
+          ORDER BY f.submitted_at DESC;
+      END
+      ');
+      ]]>
+    </sql>
   </changeSet>
 </databaseChangeLog>
