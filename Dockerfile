@@ -3,7 +3,7 @@ FROM openjdk:17-jdk-slim
 
 # Install dependencies
 RUN apt-get update && \
-    apt-get install -y wget unzip && \
+    apt-get install -y wget unzip bash && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Liquibase
