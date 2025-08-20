@@ -17,9 +17,6 @@ RUN curl -fsSL "https://github.com/liquibase/liquibase/releases/download/v${LB_V
  && ln -s /opt/liquibase/liquibase /usr/local/bin/liquibase \
  && chmod +x /opt/liquibase/liquibase
 
-# Optional: Add JDBC drivers here
-COPY drivers/*.jar /opt/liquibase/lib/
-
 # Set shell to bash for compatibility
 SHELL ["/bin/bash", "-c"]
 
