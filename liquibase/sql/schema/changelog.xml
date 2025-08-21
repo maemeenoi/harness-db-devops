@@ -3,15 +3,15 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
   <!-- V2__schema.sql -->
-  <changeSet id="V2-add-status-column-sqlserver" author="redgate">
+  <changeSet id="V2-add-Status-column-sqlserver" author="redgate">
     <preConditions onFail="MARK_RAN">
       <not>
-        <columnExists tableName="customer_feedback" columnName="status" schemaName="sales"/>
+        <columnExists tableName="CustomerFeedback" columnName="Status" schemaName="Sales"/>
       </not>
     </preConditions>
 
-    <addColumn tableName="customer_feedback" schemaName="sales">
-      <column name="status" type="VARCHAR(20)" defaultValue="active">
+    <addColumn tableName="CustomerFeedback" schemaName="Sales">
+      <column name="Status" type="VARCHAR(20)" defaultValue="active">
         <constraints nullable="false"/>
       </column>
     </addColumn>

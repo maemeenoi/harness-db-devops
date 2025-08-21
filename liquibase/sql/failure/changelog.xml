@@ -2,10 +2,10 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
-  <!-- V4__failure.sql (intentional error) -->
+  <!-- V4__failure.sql (intentional error for test) -->
   <changeSet id="V4-broken-script-sqlserver" author="redgate">
-    <addColumn tableName="customer_feedback" schemaName="sales">
-      <column name="status" type="VARCHAR(20)" defaultValue="active">
+    <addColumn tableName="CustomerFeedback" schemaName="Sales">
+      <column name="Status" type="VARCHAR(20)" defaultValue="active">
         <constraints nullable="false"/>
       </column>
     </addColumn>

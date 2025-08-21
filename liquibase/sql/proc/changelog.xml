@@ -6,23 +6,24 @@
   <changeSet id="V3-create-proc-sqlserver" author="redgate">
     <sql>
       <![CDATA[
-      IF OBJECT_ID('sales.GetRecentFeedbackByRegion', 'P') IS NOT NULL
-        DROP PROCEDURE sales.GetRecentFeedbackByRegion;
+      IF OBJECT_ID('Sales.GetRecentFeedbackByRegion', 'P') IS NOT NULL
+        DROP PROCEDURE Sales.GetRecentFeedbackByRegion;
 
       EXEC ('
-      CREATE PROCEDURE sales.GetRecentFeedbackByRegion
+      CREATE PROCEDURE Sales.GetRecentFeedbackByRegion
       AS
       BEGIN
           SELECT TOP 10
               c.CustomerID,
               c.TerritoryID,
-              f.rating,
-              f.feedback_text,
-              f.submitted_at
-          FROM sales.Customer c
-          JOIN sales.customer_feedback f ON c.CustomerID = f.customer_id
-          WHERE f.submitted_at > DATEADD(day, -30, GETUTCDATE())
-          ORDER BY f.submitted_at DESC;
+              f.Rating,
+              f.FeedbackText,
+              f.SubmittedAt,
+              f.Status
+          FROM Sales.Customer c
+          JOIN Sales.CustomerFeedback f ON c.CustomerID = f.CustomerID
+          WHERE f.SubmittedAt > DATEADD(day, -30, GETUTCDATE())
+          ORDER BY f.SubmittedAt DESC;
       END
       ');
       ]]>
