@@ -1,47 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-  http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-  <!-- V1__baseline.sql for SQL Server -->
-  <changeSet id="V1-baseline-sqlserver" author="redgate">
-    <createTable tableName="customer_feedback" schemaName="sales">
-      <column name="feedback_id" type="INT" autoIncrement="true">
-        <constraints primaryKey="true"/>
-      </column>
-      <column name="customer_id" type="INT">
-        <constraints nullable="false"/>
-      </column>
-      <column name="rating" type="INT"/>
-      <column name="feedback_text" type="NVARCHAR(MAX)"/>
-      <column name="submitted_at" type="DATETIME2" defaultValueComputed="SYSUTCDATETIME()"/>
-      <column name="status" type="VARCHAR(20)" defaultValue="active">
-        <constraints nullable="false"/>
-      </column>
-    </createTable>
+    <!-- V1_baseline.sql for SQL Server -->
+    <changeSet id="V1-baseline-sqlserver" author="redgate">
+        <createTable tableName="CustomerFeedback" schemaName="Sales">
+            <column name="FeedbackID" type="INT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="CustomerID" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="Rating" type="INT"/>
+            <column name="FeedbackText" type="NVARCHAR(MAX)"/>
+            <column name="SubmittedAt" type="DATETIME2" defaultValueComputed="SYSUTCDATETIME()"/>
+            <column name="Status" type="VARCHAR(20)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
 
-    <addForeignKeyConstraint 
-      baseTableName="customer_feedback"
-      baseColumnNames="customer_id"
-      referencedTableName="Customer"
-      referencedColumnNames="CustomerID"
-      constraintName="fk_customer_feedback_customer"
-      baseTableSchemaName="sales"
-      referencedTableSchemaName="sales"/>
+        <addForeignKeyConstraint 
+            baseTableName="CustomerFeedback"
+            baseTableSchemaName="Sales"
+            baseColumnNames="CustomerID"
+            referencedTableName="Customer"
+            referencedTableSchemaName="Sales"
+            referencedColumnNames="CustomerID"
+            constraintName="FK_CustomerFeedback_Customer"/>
 
-    <createView viewName="customer_feedback_summary" schemaName="sales">
-      SELECT
-        c.CustomerID,
-        c.AccountNumber,
-        f.feedback_id,
-        f.rating,
-        f.feedback_text,
-        f.submitted_at
-      FROM sales.Customer c
-      LEFT JOIN sales.customer_feedback f ON c.CustomerID = f.customer_id
-    </createView>
-  </changeSet>
+        <createView viewName="CustomerFeedbackSummary" schemaName="Sales">
+            SELECT
+                c.CustomerID,
+                c.AccountNumber,
+                f.FeedbackID,
+                f.Rating,
+                f.FeedbackText,
+                f.SubmittedAt,
+                f.Status
+            FROM Sales.Customer c
+            LEFT JOIN Sales.CustomerFeedback f ON c.CustomerID = f.CustomerID
+        </createView>
+    </changeSet>
 
 </databaseChangeLog>
