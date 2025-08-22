@@ -43,4 +43,5 @@
             LEFT JOIN Sales.CustomerFeedback f ON c.CustomerID = f.CustomerID
         </createView>
     </changeSet>
+    
 </databaseChangeLog>
