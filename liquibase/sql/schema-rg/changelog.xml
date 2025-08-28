@@ -52,4 +52,17 @@
   </createView>
 </changeSet>
 
+<!-- V7e: Create a view *in* RedGateSchema based on its own table -->
+<changeSet id="V7e-create-FeedbackAuditSummary" author="redgate">
+  <createView viewName="FeedbackAuditSummary" schemaName="RedGateSchema" replaceIfExists="true">
+    SELECT
+      AuditID,
+      CustomerID,
+      Note,
+      CreatedAt
+    FROM RedGateSchema.FeedbackAudit
+    ORDER BY AuditID DESC
+  </createView>
+</changeSet>
+
 </databaseChangeLog>
