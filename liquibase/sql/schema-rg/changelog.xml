@@ -3,16 +3,12 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-  <!-- V7a: Create schema -->
+  <!-- V7a: Create schema (use SQL; createSchema tag is not supported) -->
   <changeSet id="V7a-create-RedGateSchema" author="redgate">
-    <preConditions onFail="MARK_RAN">
-      <not>
-        <sqlCheck expectedResult="0">
-          SELECT COUNT(*) FROM sys.schemas WHERE name = N'RedGateSchema'
-        </sqlCheck>
-      </not>
-    </preConditions>
-    <createSchema schemaName="RedGateSchema"/>
+    <sql><![CDATA[
+      IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'RedGateSchema')
+        EXEC('CREATE SCHEMA RedGateSchema');
+    ]]></sql>
   </changeSet>
 
   <!-- V7b: Create table -->
@@ -41,7 +37,7 @@
     </insert>
   </changeSet>
 
-  <!-- V7d: Create view (declarative) -->
+  <!-- V7d: Create view -->
   <changeSet id="V7d-create-CustomerFeedbackRecent" author="redgate">
     <createView viewName="CustomerFeedbackRecent" schemaName="RedGateSchema" replaceIfExists="true">
       SELECT c.CustomerID,
