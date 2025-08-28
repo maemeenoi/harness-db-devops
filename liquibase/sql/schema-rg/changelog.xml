@@ -7,7 +7,7 @@
   <changeSet id="V5b-create-RedGate-schema" author="redgate">
     <sql><![CDATA[
       IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'RedGate')
-        EXEC('CREATE SCHEMA RedGate AUTHORIZATION dbo');
+        EXEC('CREATE SCHEMA RedGate');
     ]]></sql>
   </changeSet>
 
