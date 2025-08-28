@@ -8,5 +8,9 @@
   <include file="schema/changelog.xml" relativeToChangelogFile="true" />
   <include file="proc/changelog.xml" relativeToChangelogFile="true" />
   <include file="failure/changelog.xml" relativeToChangelogFile="true" />
-
+  <include file="schema-rg/changelog.xml" relativeToChangelogFile="true" />
+  <include file="function/changelog.xml" relativeToChangelogFile="true" />
+  <include file="data-seed/changelog.xml" relativeToChangelogFile="true" />
+  <include file="drop-column/changelog.xml" relativeToChangelogFile="true" />
+  <include file="modify-objects/changelog.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

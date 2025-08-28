@@ -1,0 +1,32 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- Create a new schema rg -->
+  <changeSet id="V5-create-rg-schema-sqlserver" author="redgate">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <sqlCheck expectedResult="0">
+          SELECT COUNT(*) FROM sys.schemas WHERE name = 'rg'
+        </sqlCheck>
+      </not>
+    </preConditions>
+    <sql>CREATE SCHEMA rg AUTHORIZATION dbo;</sql>
+  </changeSet>
+
+  <!-- Move existing view into rg schema (schema modification via object transfer) -->
+  <changeSet id="V6-move-view-to-rg-sqlserver" author="redgate" runOnChange="true">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="CustomerFeedback" schemaName="Sales"/>
+      <viewExists viewName="customer_feedback_summary" schemaName="Sales"/>
+    </preConditions>
+    <sql>
+      <![CDATA[
+      IF OBJECT_ID('rg.customer_feedback_summary', 'V') IS NULL
+        EXEC('ALTER SCHEMA rg TRANSFER Sales.customer_feedback_summary');
+      ]]>
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>
