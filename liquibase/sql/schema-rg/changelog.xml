@@ -3,30 +3,23 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-  <!-- Create a new schema rg -->
-  <changeSet id="V5-create-rg-schema-sqlserver" author="redgate">
-    <preConditions onFail="MARK_RAN">
-      <not>
-        <sqlCheck expectedResult="0">
-          SELECT COUNT(*) FROM sys.schemas WHERE name = 'rg'
-        </sqlCheck>
-      </not>
-    </preConditions>
-    <sql>CREATE SCHEMA rg AUTHORIZATION dbo;</sql>
+  <!-- Create schema RedGate if missing -->
+  <changeSet id="V5b-create-RedGate-schema" author="redgate">
+    <sql><![CDATA[
+      IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'RedGate')
+        EXEC('CREATE SCHEMA RedGate AUTHORIZATION dbo');
+    ]]></sql>
   </changeSet>
 
-  <!-- Move existing view into rg schema (schema modification via object transfer) -->
-  <changeSet id="V6-move-view-to-rg-sqlserver" author="redgate" runOnChange="true">
-    <preConditions onFail="MARK_RAN">
-      <tableExists tableName="CustomerFeedback" schemaName="Sales"/>
-      <viewExists viewName="customer_feedback_summary" schemaName="Sales"/>
-    </preConditions>
-    <sql>
-      <![CDATA[
-      IF OBJECT_ID('rg.customer_feedback_summary', 'V') IS NULL
-        EXEC('ALTER SCHEMA rg TRANSFER Sales.customer_feedback_summary');
-      ]]>
-    </sql>
+  <!-- Move the view into RedGate if it exists in Sales and not already in RedGate -->
+  <changeSet id="V6b-move-summary-view-to-RedGate" author="redgate">
+    <sql><![CDATA[
+      IF OBJECT_ID(N'Sales.customer_feedback_summary', 'V') IS NOT NULL
+         AND OBJECT_ID(N'RedGate.customer_feedback_summary', 'V') IS NULL
+      BEGIN
+        EXEC('ALTER SCHEMA RedGate TRANSFER Sales.customer_feedback_summary');
+      END
+    ]]></sql>
   </changeSet>
 
 </databaseChangeLog>
