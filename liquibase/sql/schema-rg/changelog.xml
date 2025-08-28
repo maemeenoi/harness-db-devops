@@ -61,8 +61,16 @@
       Note,
       CreatedAt
     FROM RedGateSchema.FeedbackAudit
-    ORDER BY AuditID DESC
   </createView>
 </changeSet>
+
+<!-- V7f: remove the old cross-schema view if you don’t want it -->
+<changeSet id="V7f-drop-CustomerFeedbackRecent" author="redgate">
+  <sql><![CDATA[
+    IF OBJECT_ID(N'RedGateSchema.CustomerFeedbackRecent','V') IS NOT NULL
+      DROP VIEW RedGateSchema.CustomerFeedbackRecent;
+  ]]></sql>
+</changeSet>
+
 
 </databaseChangeLog>
