@@ -3,23 +3,14 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-  <!-- Create schema RedGate if missing -->
-  <changeSet id="V5b-create-RedGate-schema" author="redgate">
-    <sql><![CDATA[
-      IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'RedGate')
-        EXEC('CREATE SCHEMA RedGate');
-    ]]></sql>
-  </changeSet>
-
-  <!-- Move the view into RedGate if it exists in Sales and not already in RedGate -->
-  <changeSet id="V6b-move-summary-view-to-RedGate" author="redgate">
-    <sql><![CDATA[
-      IF OBJECT_ID(N'Sales.customer_feedback_summary', 'V') IS NOT NULL
-         AND OBJECT_ID(N'RedGate.customer_feedback_summary', 'V') IS NULL
-      BEGIN
-        EXEC('ALTER SCHEMA RedGate TRANSFER Sales.customer_feedback_summary');
-      END
-    ]]></sql>
-  </changeSet>
+<changeSet id="V6c-move-CustomerFeedbackSummary-to-RedGate" author="redgate">
+  <sql><![CDATA[
+    IF OBJECT_ID(N'Sales.CustomerFeedbackSummary', 'V') IS NOT NULL
+       AND OBJECT_ID(N'RedGate.CustomerFeedbackSummary', 'V') IS NULL
+    BEGIN
+      EXEC('ALTER SCHEMA RedGate TRANSFER Sales.CustomerFeedbackSummary');
+    END
+  ]]></sql>
+</changeSet>
 
 </databaseChangeLog>
