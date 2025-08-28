@@ -28,5 +28,4 @@
       <column name="Source" value="email"/>
     </insert>
   </changeSet>
-
 </databaseChangeLog>
