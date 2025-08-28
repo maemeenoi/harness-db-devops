@@ -1,0 +1,84 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- V11a: Modify view: add Source (Note was dropped earlier) -->
+  <changeSet id="V11a-modify-view-FeedbackAuditSummary" author="redgate">
+    <createView viewName="FeedbackAuditSummary" schemaName="RedGateSchema" replaceIfExists="true">
+      SELECT
+        AuditID,
+        CustomerID,
+        Source,
+        CreatedAt
+      FROM RedGateSchema.FeedbackAudit
+    </createView>
+  </changeSet>
+
+  <!-- V12a: Modify proc: recreate with parameters & ordering -->
+  <changeSet id="V12a-modify-proc-GetRecentAudits" author="redgate">
+    <sql><![CDATA[
+      IF OBJECT_ID(N'RedGateSchema.GetRecentAudits','P') IS NOT NULL
+        DROP PROCEDURE RedGateSchema.GetRecentAudits;
+
+      EXEC(N'
+        CREATE PROCEDURE RedGateSchema.GetRecentAudits
+            @Days INT = 30,
+            @MinCustomerID INT = NULL,
+            @Source NVARCHAR(50) = NULL
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+
+            SELECT TOP (50)
+                a.AuditID,
+                a.CustomerID,
+                a.Source,
+                a.CreatedAt
+            FROM RedGateSchema.FeedbackAudit a
+            WHERE a.CreatedAt > DATEADD(day, -@Days, SYSUTCDATETIME())
+              AND (@MinCustomerID IS NULL OR a.CustomerID >= @MinCustomerID)
+              AND (@Source IS NULL OR a.Source = @Source)
+            ORDER BY a.CreatedAt DESC;
+        END
+      ');
+    ]]></sql>
+  </changeSet>
+
+  <!-- V13a: Modify function: add optional @Source filter -->
+  <changeSet id="V13a-modify-func-CountRecentAudits" author="redgate">
+    <sql><![CDATA[
+      IF OBJECT_ID(N'RedGateSchema.CountRecentAudits','FN') IS NOT NULL
+        DROP FUNCTION RedGateSchema.CountRecentAudits;
+
+      EXEC(N'
+        CREATE FUNCTION RedGateSchema.CountRecentAudits
+        (
+          @Days INT,
+          @Source NVARCHAR(50) = NULL
+        )
+        RETURNS INT
+        AS
+        BEGIN
+          RETURN (
+            SELECT COUNT(*) 
+            FROM RedGateSchema.FeedbackAudit a
+            WHERE a.CreatedAt > DATEADD(day, -@Days, SYSUTCDATETIME())
+              AND (@Source IS NULL OR a.Source = @Source)
+          );
+        END
+      ');
+    ]]></sql>
+  </changeSet>
+  
+  <!-- V14a: Modify schema: Add schema rename to your modify-objects changelog -->
+  <changeSet id="V14a-modify-schema-rename" author="redgate">
+  <sql><![CDATA[
+    IF EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'RedGateSchema')
+    BEGIN
+      EXEC sp_rename 'RedGateSchema', 'RedGateSchemaV2';
+    END
+  ]]></sql>
+</changeSet>
+
+</databaseChangeLog>
