@@ -70,15 +70,13 @@
       ');
     ]]></sql>
   </changeSet>
-  
-  <!-- V14a: Modify schema: Add schema rename to your modify-objects changelog -->
-  <changeSet id="V14a-modify-schema-rename" author="redgate">
-  <sql><![CDATA[
-    IF EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'RedGateSchema')
-    BEGIN
-      EXEC sp_rename 'RedGateSchema', 'RedGateSchemaV2';
-    END
-  ]]></sql>
-</changeSet>
+
+  <!-- V14a: Modify schema: Change schema owner -->
+  <changeSet id="V14a-modify-schema-owner" author="redgate">
+    <sql><![CDATA[
+      IF EXISTS (SELECT 1 FROM sys.schemas WHERE name = N'RedGateSchema')
+        ALTER AUTHORIZATION ON SCHEMA::RedGateSchema TO dbo;
+    ]]></sql>
+  </changeSet>
 
 </databaseChangeLog>
