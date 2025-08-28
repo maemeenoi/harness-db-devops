@@ -1,0 +1,27 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- V8a: Create/replace scalar function to count recent audit rows -->
+  <changeSet id="V8a-create-func-CountRecentAudits" author="redgate">
+    <sql><![CDATA[
+      IF OBJECT_ID(N'RedGateSchema.CountRecentAudits','FN') IS NOT NULL
+        DROP FUNCTION RedGateSchema.CountRecentAudits;
+
+      EXEC(N'
+        CREATE FUNCTION RedGateSchema.CountRecentAudits (@Days INT)
+        RETURNS INT
+        AS
+        BEGIN
+          RETURN (
+            SELECT COUNT(*)
+            FROM RedGateSchema.FeedbackAudit a
+            WHERE a.CreatedAt > DATEADD(day, -@Days, SYSUTCDATETIME())
+          );
+        END
+      ');
+    ]]></sql>
+  </changeSet>
+
+</databaseChangeLog>
