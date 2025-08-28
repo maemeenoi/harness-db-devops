@@ -37,20 +37,19 @@
     </insert>
   </changeSet>
 
-  <!-- V7d: Create view -->
-  <changeSet id="V7d-create-CustomerFeedbackRecent" author="redgate">
-    <createView viewName="CustomerFeedbackRecent" schemaName="RedGateSchema" replaceIfExists="true">
-      SELECT c.CustomerID,
-             c.AccountNumber,
-             f.FeedbackID,
-             f.Rating,
-             f.FeedbackText,
-             f.SubmittedAt
-      FROM Sales.Customer c
-      LEFT JOIN Sales.CustomerFeedback f ON c.CustomerID = f.CustomerID
-      WHERE f.SubmittedAt > DATEADD(day, -30, SYSUTCDATETIME())
-      ORDER BY f.SubmittedAt DESC
-    </createView>
-  </changeSet>
+  <changeSet id="V7d-fix-CustomerFeedbackRecent" author="redgate">
+  <createView viewName="CustomerFeedbackRecent" schemaName="RedGateSchema" replaceIfExists="true">
+    SELECT
+      c.CustomerID,
+      c.AccountNumber,
+      f.FeedbackID,
+      f.Rating,
+      f.FeedbackText,
+      f.SubmittedAt
+    FROM Sales.Customer c
+    LEFT JOIN Sales.CustomerFeedback f ON c.CustomerID = f.CustomerID
+    WHERE f.SubmittedAt > DATEADD(day, -30, SYSUTCDATETIME())
+  </createView>
+</changeSet>
 
 </databaseChangeLog>
