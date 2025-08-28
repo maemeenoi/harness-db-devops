@@ -3,14 +3,58 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-<changeSet id="V6c-move-CustomerFeedbackSummary-to-RedGate" author="redgate">
-  <sql><![CDATA[
-    IF OBJECT_ID(N'Sales.CustomerFeedbackSummary', 'V') IS NOT NULL
-       AND OBJECT_ID(N'RedGate.CustomerFeedbackSummary', 'V') IS NULL
-    BEGIN
-      EXEC('ALTER SCHEMA RedGate TRANSFER Sales.CustomerFeedbackSummary');
-    END
-  ]]></sql>
-</changeSet>
+  <!-- V7a: Create schema -->
+  <changeSet id="V7a-create-RedGateSchema" author="redgate">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <sqlCheck expectedResult="0">
+          SELECT COUNT(*) FROM sys.schemas WHERE name = N'RedGateSchema'
+        </sqlCheck>
+      </not>
+    </preConditions>
+    <createSchema schemaName="RedGateSchema"/>
+  </changeSet>
+
+  <!-- V7b: Create table -->
+  <changeSet id="V7b-create-FeedbackAudit" author="redgate">
+    <createTable tableName="FeedbackAudit" schemaName="RedGateSchema">
+      <column name="AuditID" type="INT" autoIncrement="true">
+        <constraints primaryKey="true" primaryKeyName="PK_FeedbackAudit"/>
+      </column>
+      <column name="CustomerID" type="INT"/>
+      <column name="Note" type="NVARCHAR(200)"/>
+      <column name="CreatedAt" type="DATETIME2" defaultValueComputed="SYSUTCDATETIME()">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+  </changeSet>
+
+  <!-- V7c: Seed rows -->
+  <changeSet id="V7c-seed-FeedbackAudit" author="redgate" runOnChange="true">
+    <insert tableName="FeedbackAudit" schemaName="RedGateSchema">
+      <column name="CustomerID" valueNumeric="11000"/>
+      <column name="Note" value="Initial audit row"/>
+    </insert>
+    <insert tableName="FeedbackAudit" schemaName="RedGateSchema">
+      <column name="CustomerID" valueNumeric="11001"/>
+      <column name="Note" value="Another audit row"/>
+    </insert>
+  </changeSet>
+
+  <!-- V7d: Create view (declarative) -->
+  <changeSet id="V7d-create-CustomerFeedbackRecent" author="redgate">
+    <createView viewName="CustomerFeedbackRecent" schemaName="RedGateSchema" replaceIfExists="true">
+      SELECT c.CustomerID,
+             c.AccountNumber,
+             f.FeedbackID,
+             f.Rating,
+             f.FeedbackText,
+             f.SubmittedAt
+      FROM Sales.Customer c
+      LEFT JOIN Sales.CustomerFeedback f ON c.CustomerID = f.CustomerID
+      WHERE f.SubmittedAt > DATEADD(day, -30, SYSUTCDATETIME())
+      ORDER BY f.SubmittedAt DESC
+    </createView>
+  </changeSet>
 
 </databaseChangeLog>
