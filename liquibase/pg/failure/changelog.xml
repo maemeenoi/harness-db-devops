@@ -1,0 +1,12 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- VPGX: intentionally add a column that already exists to force an error -->
+  <changeSet id="VPGX-duplicate-add-column" author="redgate" failOnError="true">
+    <sql><![CDATA[
+      ALTER TABLE redgate.feedback_audit ADD COLUMN created_at TIMESTAMPTZ;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>
