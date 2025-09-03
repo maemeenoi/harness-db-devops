@@ -1,23 +1,29 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<databaseChangeLog
-  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-  http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-  <!-- V2__schema.sql -->
-  <changeSet id="V2-add-status-column" author="redgate">
-    <preConditions onFail="MARK_RAN">
-      <not>
-        <columnExists tableName="customer_feedback" columnName="status" schemaName="sales"/>
-      </not>
-    </preConditions>
-
-    <addColumn tableName="customer_feedback" schemaName="sales">
-      <column name="status" type="VARCHAR(20)" defaultValue="active">
-        <constraints nullable="false"/>
-      </column>
-    </addColumn>
+  <!-- VPG1: create schema redgate -->
+  <changeSet id="VPG1-create-schema-redgate" author="redgate">
+    <sql><![CDATA[
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'redgate') THEN
+          EXECUTE 'CREATE SCHEMA redgate AUTHORIZATION ' || current_user;
+        END IF;
+      END$$;
+    ]]></sql>
   </changeSet>
 
+  <!-- VPG2: create table redgate.feedback_audit -->
+  <changeSet id="VPG2-create-table-feedback_audit" author="redgate">
+    <sql><![CDATA[
+      CREATE TABLE IF NOT EXISTS redgate.feedback_audit (
+        audit_id    BIGSERIAL PRIMARY KEY,
+        customer_id INTEGER,
+        note        VARCHAR(200),
+        created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    ]]></sql>
+  </changeSet>
 </databaseChangeLog>
