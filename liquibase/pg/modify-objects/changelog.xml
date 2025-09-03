@@ -1,0 +1,38 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- VPG9: modify schema (comment acts as schema metadata change) -->
+  <changeSet id="VPG9-modify-schema-comment" author="redgate">
+    <sql><![CDATA[
+      COMMENT ON SCHEMA redgate IS 'Liquibase PG test schema (updated)';
+    ]]></sql>
+  </changeSet>
+
+  <!-- VPG10: modify view (add customer_id alias just to show change) -->
+  <changeSet id="VPG10-modify-view" author="redgate">
+    <sql><![CDATA[
+      CREATE OR REPLACE VIEW redgate.feedback_audit_summary AS
+      SELECT audit_id, customer_id AS cust_id, created_at
+      FROM redgate.feedback_audit;
+    ]]></sql>
+  </changeSet>
+
+  <!-- VPG11: modify function (same logic, different name for clarity) -->
+  <changeSet id="VPG11-modify-func-count_recent_audits" author="redgate">
+    <sql splitStatements="false"><![CDATA[
+      CREATE OR REPLACE FUNCTION redgate.count_recent_audits(p_days integer)
+      RETURNS integer
+      LANGUAGE plpgsql
+      AS $$
+      DECLARE v_count integer;
+      BEGIN
+        SELECT COUNT(*) INTO v_count
+        FROM redgate.feedback_audit a
+        WHERE a.created_at > now() - (p_days || ' days')::interval;
+        RETURN v_count;
+      END$$;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>
