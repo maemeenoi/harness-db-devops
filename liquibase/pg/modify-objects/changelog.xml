@@ -10,13 +10,24 @@
     ]]></sql>
   </changeSet>
 
-  <!-- VPG10: modify view (add customer_id alias just to show change) -->
   <changeSet id="VPG10-modify-view" author="redgate">
-    <sql><![CDATA[
-      CREATE OR REPLACE VIEW redgate.feedback_audit_summary AS
-      SELECT audit_id, customer_id AS cust_id, created_at
-      FROM redgate.feedback_audit;
-    ]]></sql>
+    <sql splitStatements="false">
+      <![CDATA[
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'redgate'
+            AND table_name   = 'feedback_audit_summary'
+            AND column_name  = 'customer_id'
+        ) THEN
+          EXECUTE 'ALTER VIEW redgate.feedback_audit_summary RENAME COLUMN customer_id TO cust_id';
+        END IF;
+      END
+      $$ LANGUAGE plpgsql;
+      ]]>
+    </sql>
   </changeSet>
 
   <!-- VPG11: modify function (same logic, different name for clarity) -->
