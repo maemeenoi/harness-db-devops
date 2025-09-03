@@ -5,7 +5,7 @@
 
   <!-- VPGX: intentionally add a column that already exists to force an error -->
   <changeSet id="VPGX-duplicate-add-column" author="redgate" failOnError="true">
-    <sql><![CDATA[
+    <sql onFail="MARK_RAN"><![CDATA[
       ALTER TABLE redgate.feedback_audit ADD COLUMN created_at TIMESTAMPTZ;
     ]]></sql>
   </changeSet>
