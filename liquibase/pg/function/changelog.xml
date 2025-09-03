@@ -1,0 +1,21 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+  <!-- VPG5: create or replace function -->
+  <changeSet id="VPG5-create-func-count_recent_audits" author="redgate">
+    <sql><![CDATA[
+      CREATE OR REPLACE FUNCTION redgate.count_recent_audits(p_days integer)
+      RETURNS integer
+      LANGUAGE plpgsql
+      AS $$
+      DECLARE v_count integer;
+      BEGIN
+        SELECT COUNT(*) INTO v_count
+        FROM redgate.feedback_audit a
+        WHERE a.created_at > now() - (p_days || ' days')::interval;
+        RETURN v_count;
+      END$$;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>
