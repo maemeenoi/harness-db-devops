@@ -4,16 +4,13 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
   <!-- VPG1: create schema redgate -->
-  <changeSet id="VPG1-create-schema-redgate" author="redgate">
-    <sql><![CDATA[
-      DO $$
-      BEGIN
-        IF NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'redgate') THEN
-          EXECUTE 'CREATE SCHEMA redgate AUTHORIZATION ' || current_user;
-        END IF;
-      END$$;
-    ]]></sql>
-  </changeSet>
+<changeSet id="VPG1-create-schema-redgate" author="redgate">
+  <sql>
+    <![CDATA[
+      CREATE SCHEMA IF NOT EXISTS redgate AUTHORIZATION CURRENT_USER;
+    ]]>
+  </sql>
+</changeSet>
   <!-- VPG2: create table redgate.feedback_audit -->
   <changeSet id="VPG2-create-table-feedback_audit" author="redgate">
     <sql><![CDATA[
