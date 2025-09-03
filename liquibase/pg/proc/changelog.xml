@@ -1,0 +1,17 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+  <!-- VPG6: create procedure get_recent_audits -->
+  <changeSet id="VPG6-create-proc-get_recent_audits" author="redgate">
+    <sql splitStatements="false"><![CDATA[
+      CREATE OR REPLACE PROCEDURE redgate.get_recent_audits(p_days integer, p_min_customer_id integer DEFAULT NULL)
+      LANGUAGE plpgsql
+      AS $$
+      BEGIN
+        -- for evidence: just select; clients CALL the proc
+        PERFORM 1;
+      END$$;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>
