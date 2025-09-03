@@ -1,0 +1,22 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- VPG7: ensure view excludes note -->
+  <changeSet id="VPG7-update-view-no-note" author="redgate">
+    <sql><![CDATA[
+      CREATE OR REPLACE VIEW redgate.feedback_audit_summary AS
+      SELECT audit_id, customer_id, created_at
+      FROM redgate.feedback_audit;
+    ]]></sql>
+  </changeSet>
+
+  <!-- VPG8: drop column note -->
+  <changeSet id="VPG8-drop-column-note" author="redgate">
+    <preConditions onFail="MARK_RAN">
+      <columnExists schemaName="redgate" tableName="feedback_audit" columnName="note"/>
+    </preConditions>
+    <dropColumn schemaName="redgate" tableName="feedback_audit" columnName="note"/>
+  </changeSet>
+</databaseChangeLog>
