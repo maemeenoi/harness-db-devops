@@ -1,0 +1,36 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <changeSet id="VSQL5-drop-func-count_recent_audits" author="redgate">
+    <sql>
+      <![CDATA[
+      IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'RedGate.count_recent_audits') AND type in (N'FN', N'IF', N'TF'))
+      BEGIN
+        DROP FUNCTION RedGate.count_recent_audits
+      END
+      ]]>
+    </sql>
+  </changeSet>
+
+  <changeSet id="VSQL5-create-func-count_recent_audits" author="redgate">
+    <sql splitStatements="false">
+      <![CDATA[
+      CREATE FUNCTION RedGate.count_recent_audits(@p_days INT)
+      RETURNS INT
+      AS
+      BEGIN
+        DECLARE @v_count INT;
+        
+        SELECT @v_count = COUNT(*)
+        FROM RedGate.FeedbackAudit a
+        WHERE a.CreatedAt > DATEADD(DAY, -@p_days, SYSDATETIMEOFFSET());
+        
+        RETURN @v_count;
+      END
+      ]]>
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>
