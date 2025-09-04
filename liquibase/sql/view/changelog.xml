@@ -1,0 +1,18 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+  <!-- VSQL4: create view -->
+  <changeSet id="VSQL4-create-view-FeedbackAuditSummary" author="redgate">
+    <sql><![CDATA[
+      IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID(N'RedGate.FeedbackAuditSummary'))
+      BEGIN
+        DROP VIEW RedGate.FeedbackAuditSummary
+      END
+
+      CREATE VIEW RedGate.FeedbackAuditSummary AS
+      SELECT AuditID, CustomerID, CreatedAt
+      FROM RedGate.FeedbackAudit;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>

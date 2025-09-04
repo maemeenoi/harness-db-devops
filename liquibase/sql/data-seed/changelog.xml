@@ -1,0 +1,12 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+  <!-- VSQL3: seed rows -->
+  <changeSet id="VSQL3-seed-feedback_audit" author="redgate" runOnChange="true">
+    <sql><![CDATA[
+      INSERT INTO RedGate.FeedbackAudit (CustomerID, Note)
+      VALUES (30001,'seed row one'), (30002,'seed row two');
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>
