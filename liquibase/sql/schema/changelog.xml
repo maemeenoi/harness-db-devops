@@ -11,6 +11,7 @@
     ]]></sql>
   </changeSet>
 
+
   <!-- VPG2: create table RedGate.FeedbackAudit -->
   <changeSet id="VPG2-create-table-FeedbackAudit" author="redgate">
     <sql><![CDATA[
