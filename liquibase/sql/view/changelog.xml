@@ -9,7 +9,11 @@
       BEGIN
         DROP VIEW RedGate.FeedbackAuditSummary
       END
-
+    ]]></sql>
+  </changeSet>
+  
+  <changeSet id="VSQL4-create-view-FeedbackAuditSummary-create" author="redgate">
+    <sql><![CDATA[
       CREATE VIEW RedGate.FeedbackAuditSummary AS
       SELECT AuditID, CustomerID, CreatedAt
       FROM RedGate.FeedbackAudit;
