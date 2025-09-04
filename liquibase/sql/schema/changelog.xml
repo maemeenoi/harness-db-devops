@@ -7,7 +7,10 @@
   <!-- VPG1: create schema RedGate(requires DB CREATE privilege) -->
   <changeSet id="VPG1-create-schema-RedGate" author="redgate">
     <sql><![CDATA[
-      CREATE SCHEMA IF NOT EXISTS RedGate;
+      IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'RedGate')
+      BEGIN
+        EXEC('CREATE SCHEMA RedGate')
+      END
     ]]></sql>
   </changeSet>
 
@@ -15,12 +18,15 @@
   <!-- VPG2: create table RedGate.FeedbackAudit -->
   <changeSet id="VPG2-create-table-FeedbackAudit" author="redgate">
     <sql><![CDATA[
-      CREATE TABLE IF NOT EXISTS RedGate.FeedbackAudit (
-        AuditID    BIGSERIAL PRIMARY KEY,
-        CustomerID INTEGER,
-        Note        VARCHAR(200),
-        CreatedAt  TIMESTAMPTZ NOT NULL DEFAULT now()
-      );
+      IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'RedGate.FeedbackAudit') AND type in (N'U'))
+      BEGIN
+        CREATE TABLE RedGate.FeedbackAudit (
+          AuditID    BIGINT IDENTITY(1,1) PRIMARY KEY,
+          CustomerID INTEGER,
+          Note        VARCHAR(200),
+          CreatedAt  DATETIMEOFFSET NOT NULL DEFAULT SYSDATETIMEOFFSET()
+        );
+      END
     ]]></sql>
   </changeSet>
 </databaseChangeLog>
