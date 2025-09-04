@@ -22,5 +22,4 @@
       );
     ]]></sql>
   </changeSet>
-
 </databaseChangeLog>
