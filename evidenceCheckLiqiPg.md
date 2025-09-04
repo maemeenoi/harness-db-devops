@@ -147,3 +147,57 @@ ORDER BY dateexecuted DESC;
 - Keep them in a folder per test (e.g. `/docs/evidence/pg/schema`, `/pg/seed` …).
 
 Do you also want me to build the **SQL Server version** of this evidence script so you have identical structure across both databases?
+
+-- ==========================================
+-- 7. Modify View & Drop Column (modify-objects/changelog.xml)
+-- ==========================================
+
+-- Check current definition of the view (note column should be gone)
+SELECT viewname, definition
+FROM pg_views
+WHERE schemaname = 'redgate'
+AND viewname = 'feedback_audit_summary';
+
+-- Confirm table columns (note column should be absent)
+SELECT column_name, data_type
+FROM information_schema.columns
+WHERE table_schema = 'redgate'
+AND table_name = 'feedback_audit'
+ORDER BY ordinal_position;
+
+-- Changelog entries
+SELECT id, filename, dateexecuted
+FROM databasechangelog
+WHERE filename LIKE '%/liquibase/pg/modify-objects/%'
+ORDER BY dateexecuted DESC;
+
+-- ==========================================
+-- 9–11. Modify Schema, View, and Function (modify-objects/changelog.xml)
+-- ==========================================
+
+-- Schema comment (check updated metadata)
+SELECT nspname AS schema_name,
+obj_description(oid, 'pg_namespace') AS comment
+FROM pg_namespace
+WHERE nspname = 'redgate';
+
+-- View definition (customer_id should now be alias 'cust_id')
+SELECT viewname, definition
+FROM pg_views
+WHERE schemaname = 'redgate'
+AND viewname = 'feedback_audit_summary';
+
+-- Function definition (ensure recreated)
+SELECT routine_name, routine_schema, data_type
+FROM information_schema.routines
+WHERE routine_schema = 'redgate'
+AND routine_name = 'count_recent_audits';
+
+-- (Optional: call function to verify behaviour)
+SELECT redgate.count_recent_audits(7) AS audits_last_week;
+
+-- Changelog entries (only this folder)
+SELECT id, filename, dateexecuted
+FROM public.databasechangelog
+WHERE filename LIKE '%/liquibase/pg/modify-objects/%'
+ORDER BY dateexecuted DESC;

@@ -1,19 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
-  <!-- V2__schema.sql -->
-  <changeSet id="V2-add-Status-column-sqlserver" author="redgate">
-    <preConditions onFail="MARK_RAN">
-      <not>
-        <columnExists tableName="CustomerFeedback" columnName="Status" schemaName="Sales"/>
-      </not>
-    </preConditions>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-    <addColumn tableName="CustomerFeedback" schemaName="Sales">
-      <column name="Status" type="VARCHAR(20)" defaultValue="active">
-        <constraints nullable="false"/>
-      </column>
-    </addColumn>
+  <!-- VPG1: create schema RedGate(requires DB CREATE privilege) -->
+  <changeSet id="VPG1-create-schema-RedGate" author="redgate">
+    <sql><![CDATA[
+      CREATE SCHEMA IF NOT EXISTS RedGate;
+    ]]></sql>
   </changeSet>
+
+  <!-- VPG2: create table RedGate.FeedbackAudit -->
+  <changeSet id="VPG2-create-table-FeedbackAudit" author="redgate">
+    <sql><![CDATA[
+      CREATE TABLE IF NOT EXISTS RedGate.FeedbackAudit (
+        AuditID    BIGSERIAL PRIMARY KEY,
+        CustomerID INTEGER,
+        Note        VARCHAR(200),
+        CreatedAt  TIMESTAMPTZ NOT NULL DEFAULT now()
+      );
+    ]]></sql>
+  </changeSet>
+
 </databaseChangeLog>
