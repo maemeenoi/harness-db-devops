@@ -1,0 +1,38 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+  <!-- VSQL6: drop procedure get_recent_audits -->
+  <changeSet id="VSQL6-drop-proc-get_recent_audits" author="redgate">
+    <sql><![CDATA[
+      IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'RedGate.get_recent_audits') AND type in (N'P', N'PC'))
+      BEGIN
+        DROP PROCEDURE RedGate.get_recent_audits
+      END
+    ]]></sql>
+  </changeSet>
+
+  <!-- VSQL6: create procedure get_recent_audits -->
+  <changeSet id="VSQL6-create-proc-get_recent_audits" author="redgate">
+    <sql splitStatements="false"><![CDATA[
+      CREATE PROCEDURE RedGate.get_recent_audits
+        @p_days INT,
+        @p_min_customer_id INT = NULL
+      AS
+      BEGIN
+        SET NOCOUNT ON;
+        
+        -- Return recent audit records based on days and optional customer filter
+        SELECT 
+          AuditID,
+          CustomerID,
+          Note,
+          CreatedAt
+        FROM RedGate.FeedbackAudit
+        WHERE CreatedAt > DATEADD(DAY, -@p_days, SYSDATETIMEOFFSET())
+          AND (@p_min_customer_id IS NULL OR CustomerID >= @p_min_customer_id)
+        ORDER BY CreatedAt DESC, AuditID DESC;
+      END
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>

@@ -331,3 +331,130 @@ SELECT * FROM dbo.DATABASECHANGELOGLOCK;
 - Function result matches direct SQL query results
 - Function handles edge cases (0 days, large day ranges)
 - Function uses correct date arithmetic with DATEADD and SYSDATETIMEOFFSET
+
+## Stored Procedure Evidence
+
+```sql
+-- ==========================================
+-- Evidence: SQL Server (stored procedure)
+-- Changelog: liquibase/sql/proc/changelog.xml
+-- Purpose: Verify stored procedure creation - get_recent_audits
+-- ==========================================
+
+-- 0) Context
+SELECT
+  DB_NAME()     AS CurrentDB,
+  SUSER_SNAME() AS ExecutingLogin;
+
+-- 1) Procedure exists
+SELECT
+  s.name AS schema_name,
+  o.name AS procedure_name,
+  o.type_desc,
+  o.create_date,
+  o.modify_date
+FROM sys.objects o
+JOIN sys.schemas s ON s.schema_id = o.schema_id
+WHERE s.name = 'RedGate'
+  AND o.name = 'get_recent_audits'
+  AND o.type IN ('P', 'PC');
+
+-- 2) Procedure definition
+SELECT
+  OBJECT_NAME(object_id) AS procedure_name,
+  definition
+FROM sys.sql_modules
+WHERE object_id = OBJECT_ID('RedGate.get_recent_audits');
+
+-- 3) Procedure parameters
+SELECT
+  p.parameter_id,
+  p.name AS parameter_name,
+  TYPE_NAME(p.user_type_id) AS parameter_type,
+  p.max_length,
+  p.has_default_value,
+  p.default_value
+FROM sys.parameters p
+WHERE p.object_id = OBJECT_ID('RedGate.get_recent_audits')
+ORDER BY p.parameter_id;
+
+-- 4) Test procedure execution with different parameters
+-- Test 1: Recent 7 days (no customer filter)
+EXEC RedGate.get_recent_audits @p_days = 7;
+
+-- Test 2: Recent 30 days (no customer filter)
+EXEC RedGate.get_recent_audits @p_days = 30;
+
+-- Test 3: Recent 7 days with customer filter
+EXEC RedGate.get_recent_audits @p_days = 7, @p_min_customer_id = 30000;
+
+-- Test 4: Recent 1 day with customer filter
+EXEC RedGate.get_recent_audits @p_days = 1, @p_min_customer_id = 30001;
+
+-- Test 5: Large day range (should return all data)
+EXEC RedGate.get_recent_audits @p_days = 365;
+
+-- 5) Verify procedure results match expected direct queries
+-- Compare procedure results with direct SQL for 7 days
+SELECT 'Direct Query - 7 days' AS source, COUNT(*) AS row_count
+FROM RedGate.FeedbackAudit
+WHERE CreatedAt > DATEADD(DAY, -7, SYSDATETIMEOFFSET());
+
+-- Compare procedure results with direct SQL for 7 days + customer filter
+SELECT 'Direct Query - 7 days + customer >= 30000' AS source, COUNT(*) AS row_count
+FROM RedGate.FeedbackAudit
+WHERE CreatedAt > DATEADD(DAY, -7, SYSDATETIMEOFFSET())
+  AND CustomerID >= 30000;
+
+-- 6) Test procedure parameter validation
+-- Test with NULL customer filter (should work)
+EXEC RedGate.get_recent_audits @p_days = 7, @p_min_customer_id = NULL;
+
+-- Test with 0 days
+EXEC RedGate.get_recent_audits @p_days = 0;
+
+-- 7) Sample data showing what procedure should return
+SELECT
+  AuditID,
+  CustomerID,
+  Note,
+  CreatedAt,
+  DATEDIFF(DAY, CreatedAt, SYSDATETIMEOFFSET()) AS days_old
+FROM RedGate.FeedbackAudit
+ORDER BY CreatedAt DESC, AuditID DESC;
+
+-- 8) Liquibase history for procedure folder
+SELECT
+  ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, EXECTYPE
+FROM dbo.DATABASECHANGELOG
+WHERE FILENAME LIKE '%/liquibase/sql/proc/%'
+ORDER BY DATEEXECUTED DESC;
+
+-- 9) Liquibase lock state (should be unlocked)
+SELECT * FROM dbo.DATABASECHANGELOGLOCK;
+```
+
+### Stored Procedure Expected Results:
+
+1. **Procedure Exists**: RedGate.get_recent_audits should be present
+2. **Procedure Type**: Should be a stored procedure (type 'P')
+3. **Parameters**: Should have two parameters:
+   - @p_days INT (required)
+   - @p_min_customer_id INT (optional, default NULL)
+4. **Procedure Logic**: Should return filtered audit records based on:
+   - CreatedAt within specified days
+   - Optional CustomerID filtering
+5. **Result Set**: Should return AuditID, CustomerID, Note, CreatedAt columns
+6. **Liquibase**: Both changesets executed successfully:
+   - `VSQL6-drop-proc-get_recent_audits` (drop if exists)
+   - `VSQL6-create-proc-get_recent_audits` (create procedure)
+
+### Key Procedure Verification Points:
+
+- Procedure exists in RedGate schema
+- Procedure accepts correct parameters (@p_days INT, @p_min_customer_id INT = NULL)
+- Procedure returns correct columns and data types
+- Procedure filters by date range correctly using DATEADD
+- Procedure handles optional customer filtering (NULL vs specific values)
+- Procedure results ordered by CreatedAt DESC, AuditID DESC
+- Procedure handles edge cases (0 days, NULL customer filter)
