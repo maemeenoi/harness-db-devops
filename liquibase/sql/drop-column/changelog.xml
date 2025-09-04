@@ -1,0 +1,45 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- VSQL7: ensure view excludes note -->
+  <changeSet id="VSQL7-drop-view-before-update" author="redgate">
+    <sql><![CDATA[
+      IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID(N'RedGate.FeedbackAuditSummary'))
+      BEGIN
+        DROP VIEW RedGate.FeedbackAuditSummary
+      END
+    ]]></sql>
+  </changeSet>
+
+  <changeSet id="VSQL7-update-view-no-note" author="redgate">
+    <sql><![CDATA[
+      CREATE VIEW RedGate.FeedbackAuditSummary AS
+      SELECT AuditID, CustomerID, CreatedAt
+      FROM RedGate.FeedbackAudit;
+    ]]></sql>
+  </changeSet>
+
+  <!-- VSQL8: drop column note -->
+  <changeSet id="VSQL8-drop-column-note" author="redgate">
+    <preConditions onFail="MARK_RAN">
+      <columnExists schemaName="RedGate" tableName="FeedbackAudit" columnName="Note"/>
+    </preConditions>
+    <sql><![CDATA[
+      -- Drop the view first since it may reference the column
+      IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID(N'RedGate.FeedbackAuditSummary'))
+      BEGIN
+        DROP VIEW RedGate.FeedbackAuditSummary
+      END
+      
+      -- Drop the column
+      ALTER TABLE RedGate.FeedbackAudit DROP COLUMN Note;
+      
+      -- Recreate the view without the Note column
+      CREATE VIEW RedGate.FeedbackAuditSummary AS
+      SELECT AuditID, CustomerID, CreatedAt
+      FROM RedGate.FeedbackAudit;
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>

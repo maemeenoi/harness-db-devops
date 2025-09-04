@@ -458,3 +458,128 @@ SELECT * FROM dbo.DATABASECHANGELOGLOCK;
 - Procedure handles optional customer filtering (NULL vs specific values)
 - Procedure results ordered by CreatedAt DESC, AuditID DESC
 - Procedure handles edge cases (0 days, NULL customer filter)
+
+## Drop Column Evidence
+
+```sql
+-- ==========================================
+-- Evidence: SQL Server (drop-column)
+-- Changelog: liquibase/sql/drop-column/changelog.xml
+-- Purpose: Verify column drop and view updates
+-- ==========================================
+
+-- 0) Context
+SELECT
+  DB_NAME()     AS CurrentDB,
+  SUSER_SNAME() AS ExecutingLogin;
+
+-- 1) Table structure BEFORE and AFTER column drop
+-- Check current table columns
+SELECT
+  c.column_id,
+  c.name AS column_name,
+  TYPE_NAME(c.user_type_id) AS data_type,
+  c.max_length,
+  c.is_nullable,
+  dc.definition AS default_definition
+FROM sys.columns c
+LEFT JOIN sys.default_constraints dc
+  ON dc.parent_object_id = c.object_id
+ AND dc.parent_column_id = c.column_id
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAudit')
+ORDER BY c.column_id;
+
+-- 2) Verify Note column is gone
+SELECT
+  CASE WHEN COL_LENGTH('RedGate.FeedbackAudit','Note') IS NULL
+       THEN 'COLUMN DROPPED (SUCCESS)'
+       ELSE 'COLUMN STILL EXISTS (FAILED)'
+  END AS note_column_status;
+
+-- 3) Expected columns after drop (should be 3 columns only)
+SELECT COUNT(*) AS total_columns_remaining
+FROM sys.columns
+WHERE object_id = OBJECT_ID('RedGate.FeedbackAudit');
+
+-- 4) Verify view exists and works correctly
+SELECT
+  s.name AS schema_name,
+  v.name AS view_name,
+  v.create_date,
+  v.modify_date
+FROM sys.views v
+JOIN sys.schemas s ON s.schema_id = v.schema_id
+WHERE s.name = 'RedGate' AND v.name = 'FeedbackAuditSummary';
+
+-- 5) View columns (should NOT include Note column)
+SELECT
+  c.column_id,
+  c.name AS column_name,
+  TYPE_NAME(c.user_type_id) AS data_type,
+  c.max_length,
+  c.is_nullable
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAuditSummary')
+ORDER BY c.column_id;
+
+-- 6) Test view query (should work without Note column)
+SELECT COUNT(*) AS view_row_count
+FROM RedGate.FeedbackAuditSummary;
+
+-- 7) Sample data from view (should show only AuditID, CustomerID, CreatedAt)
+SELECT TOP (5) *
+FROM RedGate.FeedbackAuditSummary
+ORDER BY AuditID DESC;
+
+-- 8) Test that procedures still work after column drop
+-- This procedure should now exclude Note column from results
+EXEC RedGate.get_recent_audits @p_days = 7;
+
+-- 9) Verify data integrity - existing data should still be accessible
+SELECT
+  COUNT(*) AS total_rows,
+  COUNT(AuditID) AS non_null_audit_ids,
+  COUNT(CustomerID) AS non_null_customer_ids,
+  COUNT(CreatedAt) AS non_null_created_ats
+FROM RedGate.FeedbackAudit;
+
+-- 10) Sample table data (should show remaining columns only)
+SELECT TOP (5) *
+FROM RedGate.FeedbackAudit
+ORDER BY AuditID DESC;
+
+-- 11) Liquibase history for drop-column folder
+SELECT
+  ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, EXECTYPE
+FROM dbo.DATABASECHANGELOG
+WHERE FILENAME LIKE '%/liquibase/sql/drop-column/%'
+ORDER BY DATEEXECUTED DESC;
+
+-- 12) Liquibase lock state (should be unlocked)
+SELECT * FROM dbo.DATABASECHANGELOGLOCK;
+```
+
+### Drop Column Expected Results:
+
+1. **Column Dropped**: Note column should no longer exist in RedGate.FeedbackAudit
+2. **Table Structure**: Should have exactly 3 columns remaining:
+   - AuditID (BIGINT IDENTITY)
+   - CustomerID (INT)
+   - CreatedAt (DATETIMEOFFSET)
+3. **View Updated**: RedGate.FeedbackAuditSummary should work correctly without Note column
+4. **Data Integrity**: Existing data in remaining columns should be preserved
+5. **Dependent Objects**: Stored procedures should be updated to work without Note column
+6. **Liquibase**: All changesets executed successfully:
+   - `VSQL7-drop-view-before-update` (drop view before column changes)
+   - `VSQL7-update-view-no-note` (recreate view without Note)
+   - `VSQL8-drop-column-note` (drop column and recreate view)
+
+### Key Drop Column Verification Points:
+
+- Note column completely removed from table
+- Table has exactly 3 columns remaining
+- View recreated successfully without Note column
+- View returns correct data with remaining columns
+- Stored procedures work correctly after column drop
+- No data loss in remaining columns
+- All dependent objects (views, procedures) updated correctly
