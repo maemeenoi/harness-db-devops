@@ -226,7 +226,7 @@ SELECT
   SUSER_SNAME() AS ExecutingLogin;
 
 -- 1) Function exists
-SELECT 
+SELECT
   s.name AS schema_name,
   o.name AS function_name,
   o.type_desc,
@@ -234,19 +234,19 @@ SELECT
   o.modify_date
 FROM sys.objects o
 JOIN sys.schemas s ON s.schema_id = o.schema_id
-WHERE s.name = 'RedGate' 
+WHERE s.name = 'RedGate'
   AND o.name = 'count_recent_audits'
   AND o.type IN ('FN', 'IF', 'TF');
 
 -- 2) Function definition
-SELECT 
+SELECT
   OBJECT_NAME(object_id) AS function_name,
   definition
 FROM sys.sql_modules
 WHERE object_id = OBJECT_ID('RedGate.count_recent_audits');
 
 -- 3) Function parameters
-SELECT 
+SELECT
   p.parameter_id,
   p.name AS parameter_name,
   TYPE_NAME(p.user_type_id) AS parameter_type,
@@ -258,43 +258,43 @@ ORDER BY p.parameter_id;
 
 -- 4) Test function with different day ranges
 -- Test 1: Recent 7 days
-SELECT 
+SELECT
   'Last 7 days' AS test_period,
   RedGate.count_recent_audits(7) AS function_result,
-  (SELECT COUNT(*) 
-   FROM RedGate.FeedbackAudit 
+  (SELECT COUNT(*)
+   FROM RedGate.FeedbackAudit
    WHERE CreatedAt > DATEADD(DAY, -7, SYSDATETIMEOFFSET())) AS direct_count;
 
 -- Test 2: Recent 30 days
-SELECT 
+SELECT
   'Last 30 days' AS test_period,
   RedGate.count_recent_audits(30) AS function_result,
-  (SELECT COUNT(*) 
-   FROM RedGate.FeedbackAudit 
+  (SELECT COUNT(*)
+   FROM RedGate.FeedbackAudit
    WHERE CreatedAt > DATEADD(DAY, -30, SYSDATETIMEOFFSET())) AS direct_count;
 
 -- Test 3: Recent 1 day
-SELECT 
+SELECT
   'Last 1 day' AS test_period,
   RedGate.count_recent_audits(1) AS function_result,
-  (SELECT COUNT(*) 
-   FROM RedGate.FeedbackAudit 
+  (SELECT COUNT(*)
+   FROM RedGate.FeedbackAudit
    WHERE CreatedAt > DATEADD(DAY, -1, SYSDATETIMEOFFSET())) AS direct_count;
 
 -- Test 4: Recent 365 days (should include all data)
-SELECT 
+SELECT
   'Last 365 days' AS test_period,
   RedGate.count_recent_audits(365) AS function_result,
   (SELECT COUNT(*) FROM RedGate.FeedbackAudit) AS total_rows;
 
 -- 5) Verify function handles edge cases
 -- Test with 0 days (should return 0 or very recent records)
-SELECT 
+SELECT
   'Today only (0 days)' AS test_period,
   RedGate.count_recent_audits(0) AS function_result;
 
 -- 6) Sample data showing CreatedAt distribution
-SELECT 
+SELECT
   CAST(CreatedAt AS DATE) AS audit_date,
   COUNT(*) AS records_per_day
 FROM RedGate.FeedbackAudit
@@ -324,6 +324,7 @@ SELECT * FROM dbo.DATABASECHANGELOGLOCK;
    - `VSQL5-create-func-count_recent_audits` (create function)
 
 ### Key Function Verification Points:
+
 - Function exists in RedGate schema
 - Function accepts @p_days INT parameter
 - Function returns correct count for different day ranges
