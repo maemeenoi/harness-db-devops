@@ -746,3 +746,169 @@ SELECT * FROM dbo.DATABASECHANGELOGLOCK;
 - Function results match previous version
 - All objects have updated modify_date timestamps
 - No data loss or corruption in any objects
+
+## Failure Test Evidence
+
+```sql
+-- ==========================================
+-- Evidence: SQL Server (failure)
+-- Changelog: liquibase/sql/failure/changelog.xml
+-- Purpose: Verify error handling and failure recovery
+-- ==========================================
+
+-- 0) Context
+SELECT
+  DB_NAME()     AS CurrentDB,
+  SUSER_SNAME() AS ExecutingLogin;
+
+-- 1) Current table structure (before failure test)
+SELECT
+  c.column_id,
+  c.name AS column_name,
+  TYPE_NAME(c.user_type_id) AS data_type,
+  c.max_length,
+  c.is_nullable,
+  dc.definition AS default_definition
+FROM sys.columns c
+LEFT JOIN sys.default_constraints dc
+  ON dc.parent_object_id = c.object_id
+ AND dc.parent_column_id = c.column_id
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAudit')
+ORDER BY c.column_id;
+
+-- 2) Verify CreatedAt column already exists (this should cause the failure)
+SELECT
+  CASE WHEN COL_LENGTH('RedGate.FeedbackAudit','CreatedAt') IS NOT NULL
+       THEN 'CreatedAt ALREADY EXISTS (will cause failure)'
+       ELSE 'CreatedAt DOES NOT EXIST (failure test invalid)'
+  END AS column_existence_check;
+
+-- 3) Check Liquibase execution status for failure changeset
+-- This should show either:
+-- - EXECUTED if onFail="MARK_RAN" worked
+-- - Failed execution in error logs
+SELECT
+  ID,
+  AUTHOR,
+  FILENAME,
+  DATEEXECUTED,
+  ORDEREXECUTED,
+  EXECTYPE,
+  MD5SUM,
+  DESCRIPTION
+FROM dbo.DATABASECHANGELOG
+WHERE FILENAME LIKE '%/liquibase/sql/failure/%'
+  AND ID = 'VSQLX-duplicate-add-column'
+ORDER BY DATEEXECUTED DESC;
+
+-- 4) Check for any partial changes or rollbacks
+-- Table structure should remain unchanged after failure
+SELECT COUNT(*) AS total_columns_after_failure
+FROM sys.columns
+WHERE object_id = OBJECT_ID('RedGate.FeedbackAudit');
+
+-- 5) Verify no duplicate CreatedAt columns exist
+SELECT
+  COUNT(*) AS createdAt_column_count,
+  CASE WHEN COUNT(*) = 1 THEN 'CORRECT (1 column)'
+       WHEN COUNT(*) > 1 THEN 'ERROR (duplicate columns)'
+       ELSE 'ERROR (no column)'
+  END AS column_count_status
+FROM sys.columns
+WHERE object_id = OBJECT_ID('RedGate.FeedbackAudit')
+  AND name = 'CreatedAt';
+
+-- 6) Test that existing functionality still works after failure
+SELECT
+  COUNT(*) AS table_row_count,
+  MIN(CreatedAt) AS oldest_record,
+  MAX(CreatedAt) AS newest_record
+FROM RedGate.FeedbackAudit;
+
+-- 7) Test that views still work after failure
+SELECT COUNT(*) AS view_row_count
+FROM RedGate.FeedbackAuditSummary;
+
+-- 8) Test that functions still work after failure
+SELECT
+  'Function test after failure' AS test_description,
+  RedGate.count_recent_audits(30) AS function_result;
+
+-- 9) Test that procedures still work after failure
+EXEC RedGate.get_recent_audits @p_days = 7;
+
+-- 10) Check Liquibase lock status (should be unlocked even after failure)
+SELECT
+  ID,
+  LOCKED,
+  LOCKGRANTED,
+  LOCKEDBY,
+  CASE
+    WHEN LOCKED = 0 THEN 'UNLOCKED (good)'
+    WHEN LOCKED = 1 THEN 'LOCKED (potential issue)'
+    ELSE 'UNKNOWN STATUS'
+  END AS lock_status
+FROM dbo.DATABASECHANGELOGLOCK;
+
+-- 11) All previous changesets should still be recorded as successful
+SELECT
+  COUNT(*) AS total_executed_changesets,
+  COUNT(CASE WHEN EXECTYPE = 'EXECUTED' THEN 1 END) AS successful_changesets,
+  COUNT(CASE WHEN EXECTYPE != 'EXECUTED' THEN 1 END) AS non_executed_changesets
+FROM dbo.DATABASECHANGELOG
+WHERE FILENAME NOT LIKE '%/liquibase/sql/failure/%';
+
+-- 12) Verify system integrity after failure handling
+-- Check that no orphaned objects or constraints exist
+SELECT
+  o.name AS object_name,
+  o.type_desc AS object_type,
+  s.name AS schema_name
+FROM sys.objects o
+JOIN sys.schemas s ON s.schema_id = o.schema_id
+WHERE s.name = 'RedGate'
+ORDER BY o.type_desc, o.name;
+
+-- 13) Sample data access test (should work normally)
+SELECT TOP (3)
+  AuditID,
+  CustomerID,
+  CreatedAt
+FROM RedGate.FeedbackAudit
+ORDER BY AuditID DESC;
+```
+
+### Failure Test Expected Results:
+
+1. **Error Handling**: The changeset should fail because CreatedAt column already exists
+2. **Recovery Mechanism**: Due to `onFail="MARK_RAN"`, Liquibase should:
+   - Mark the changeset as executed (not failed)
+   - Continue with subsequent migrations
+   - Not corrupt the database state
+3. **System Integrity**: After failure handling:
+   - Table structure remains unchanged (3 columns)
+   - Only one CreatedAt column exists (no duplicates)
+   - All existing functionality works normally
+   - Liquibase is unlocked and ready for future migrations
+4. **Changeset Status**: Should show in databasechangelog with appropriate status
+5. **No Side Effects**: All previously created objects (views, functions, procedures) continue to work
+
+### Key Failure Test Verification Points:
+
+- CreatedAt column already exists (causing expected failure)
+- `column_count_status` shows "CORRECT (1 column)"
+- `total_columns_after_failure` equals 3 (no change)
+- Liquibase lock status shows "UNLOCKED (good)"
+- All existing database objects remain functional
+- Changeset appears in databasechangelog (marked as handled)
+- No orphaned objects or constraints created
+- System ready for subsequent migrations
+
+### Purpose of This Test:
+
+This failure test validates that:
+
+- Liquibase handles SQL errors gracefully
+- `onFail="MARK_RAN"` prevents migration pipeline interruption
+- Database integrity is preserved during error conditions
+- Error recovery doesn't corrupt existing functionality
