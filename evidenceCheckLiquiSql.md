@@ -1,5 +1,145 @@
 # Evidence Check: Liquibase SQL Server Migration
 
+## Schema Evidence
+
+```sql
+-- ==========================================
+-- Evidence: SQL Server (schema)
+-- Changelog: liquibase/sql/schema/changelog.xml
+-- Purpose: Verify schema and table creation
+-- ==========================================
+
+-- 0) Context
+SELECT
+  DB_NAME()     AS CurrentDB,
+  SUSER_SNAME() AS ExecutingLogin;
+
+-- 1) Schema exists
+SELECT
+  s.name AS schema_name,
+  s.schema_id,
+  p.name AS principal_name,
+  s.create_date
+FROM sys.schemas s
+LEFT JOIN sys.database_principals p ON s.principal_id = p.principal_id
+WHERE s.name = 'RedGate';
+
+-- 2) Schema extended properties (if any were added)
+SELECT
+  s.name AS schema_name,
+  ep.name AS property_name,
+  ep.value AS property_value
+FROM sys.schemas s
+LEFT JOIN sys.extended_properties ep ON ep.major_id = s.schema_id
+  AND ep.class = 3 -- Schema level
+WHERE s.name = 'RedGate';
+
+-- 3) Table exists in correct schema
+SELECT
+  s.name AS schema_name,
+  t.name AS table_name,
+  t.object_id,
+  t.create_date,
+  t.modify_date,
+  t.type_desc
+FROM sys.tables t
+JOIN sys.schemas s ON s.schema_id = t.schema_id
+WHERE s.name = 'RedGate' AND t.name = 'FeedbackAudit';
+
+-- 4) Table column structure
+SELECT
+  c.column_id,
+  c.name AS column_name,
+  TYPE_NAME(c.user_type_id) AS data_type,
+  c.max_length,
+  c.precision,
+  c.scale,
+  c.is_nullable,
+  c.is_identity,
+  dc.definition AS default_definition
+FROM sys.columns c
+LEFT JOIN sys.default_constraints dc
+  ON dc.parent_object_id = c.object_id
+ AND dc.parent_column_id = c.column_id
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAudit')
+ORDER BY c.column_id;
+
+-- 5) Primary key constraints
+SELECT
+  kc.name AS constraint_name,
+  kc.type_desc AS constraint_type,
+  c.name AS column_name,
+  ic.key_ordinal
+FROM sys.key_constraints kc
+JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id
+  AND kc.unique_index_id = ic.index_id
+JOIN sys.columns c ON ic.object_id = c.object_id
+  AND ic.column_id = c.column_id
+WHERE kc.parent_object_id = OBJECT_ID('RedGate.FeedbackAudit')
+  AND kc.type = 'PK'
+ORDER BY ic.key_ordinal;
+
+-- 6) Identity column properties
+SELECT
+  c.name AS column_name,
+  IDENT_SEED(OBJECT_NAME(c.object_id)) AS identity_seed,
+  IDENT_INCR(OBJECT_NAME(c.object_id)) AS identity_increment,
+  c.is_identity
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAudit')
+  AND c.is_identity = 1;
+
+-- 7) Test basic table operations
+-- Insert test
+INSERT INTO RedGate.FeedbackAudit (CustomerID)
+VALUES (99999);
+
+-- Query test
+SELECT
+  COUNT(*) AS total_rows,
+  MAX(AuditID) AS highest_audit_id,
+  MIN(CreatedAt) AS earliest_created,
+  MAX(CreatedAt) AS latest_created
+FROM RedGate.FeedbackAudit;
+
+-- Clean up test data
+DELETE FROM RedGate.FeedbackAudit WHERE CustomerID = 99999;
+
+-- 8) Liquibase history for schema folder
+SELECT
+  ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, EXECTYPE
+FROM dbo.DATABASECHANGELOG
+WHERE FILENAME LIKE '%/liquibase/sql/schema/%'
+ORDER BY DATEEXECUTED DESC;
+
+-- 9) Liquibase lock state (should be unlocked)
+SELECT * FROM dbo.DATABASECHANGELOGLOCK;
+```
+
+### Schema Expected Results:
+
+1. **Schema Creation**: RedGate schema should exist
+2. **Table Creation**: RedGate.FeedbackAudit should exist with correct structure:
+   - AuditID (BIGINT IDENTITY, PRIMARY KEY)
+   - CustomerID (INT, nullable)
+   - CreatedAt (DATETIMEOFFSET, NOT NULL, default SYSDATETIMEOFFSET())
+3. **Identity Properties**: AuditID should have IDENTITY(1,1)
+4. **Constraints**: Primary key on AuditID column
+5. **Default Values**: CreatedAt should auto-populate
+6. **Liquibase**: Both changesets executed successfully:
+   - `VPG1-create-schema-RedGate` or similar (schema creation)
+   - `VPG2-create-table-FeedbackAudit` or similar (table creation)
+
+### Key Schema Verification Points:
+
+- Schema 'RedGate' exists in database
+- Table 'FeedbackAudit' exists in RedGate schema
+- Table has correct column structure and data types
+- Identity column works correctly (auto-increment)
+- Primary key constraint exists on AuditID
+- Default constraint on CreatedAt functions properly
+- Basic CRUD operations work on the table
+
 ## Data Seed Evidence
 
 ```sql
