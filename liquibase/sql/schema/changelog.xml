@@ -4,8 +4,8 @@
   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-  <!-- VPG1: create schema RedGate(requires DB CREATE privilege) -->
-  <changeSet id="VPG1-create-schema-RedGate" author="redgate">
+  <!-- VSQL1: create schema RedGate(requires DB CREATE privilege) -->
+  <changeSet id="VSQL1-create-schema-RedGate" author="redgate">
     <sql><![CDATA[
       IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'RedGate')
       BEGIN
@@ -15,8 +15,8 @@
   </changeSet>
 
 
-  <!-- VPG2: create table RedGate.FeedbackAudit -->
-  <changeSet id="VPG2-create-table-FeedbackAudit" author="redgate">
+  <!-- VSQL2: create table RedGate.FeedbackAudit -->
+  <changeSet id="VSQL2-create-table-FeedbackAudit" author="redgate">
     <sql><![CDATA[
       IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'RedGate.FeedbackAudit') AND type in (N'U'))
       BEGIN
