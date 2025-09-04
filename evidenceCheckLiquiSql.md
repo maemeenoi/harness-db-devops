@@ -583,3 +583,166 @@ SELECT * FROM dbo.DATABASECHANGELOGLOCK;
 - Stored procedures work correctly after column drop
 - No data loss in remaining columns
 - All dependent objects (views, procedures) updated correctly
+
+## Modify Objects Evidence
+
+```sql
+-- ==========================================
+-- Evidence: SQL Server (modify-objects)
+-- Changelog: liquibase/sql/modify-objects/changelog.xml
+-- Purpose: Verify schema comment, view modification, and function update
+-- ==========================================
+
+-- 0) Context
+SELECT
+  DB_NAME()     AS CurrentDB,
+  SUSER_SNAME() AS ExecutingLogin;
+
+-- 1) Schema extended property (SQL Server equivalent of schema comment)
+SELECT
+  s.name AS schema_name,
+  ep.value AS schema_description
+FROM sys.schemas s
+LEFT JOIN sys.extended_properties ep ON ep.major_id = s.schema_id
+  AND ep.name = 'MS_Description'
+  AND ep.class = 3 -- Schema level
+WHERE s.name = 'RedGate';
+
+-- 2) View exists and has been modified
+SELECT
+  s.name AS schema_name,
+  v.name AS view_name,
+  v.create_date,
+  v.modify_date
+FROM sys.views v
+JOIN sys.schemas s ON s.schema_id = v.schema_id
+WHERE s.name = 'RedGate' AND v.name = 'FeedbackAuditSummary';
+
+-- 3) View columns after modification (should show CustID instead of CustomerID)
+SELECT
+  c.column_id,
+  c.name AS column_name,
+  TYPE_NAME(c.user_type_id) AS data_type,
+  c.max_length,
+  c.is_nullable
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAuditSummary')
+ORDER BY c.column_id;
+
+-- 4) Verify view column rename (should have CustID, not CustomerID)
+SELECT
+  CASE WHEN EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID('RedGate.FeedbackAuditSummary')
+    AND name = 'CustID'
+  ) THEN 'CustID FOUND (SUCCESS)'
+  ELSE 'CustID NOT FOUND (FAILED)' END AS custid_column_status,
+
+  CASE WHEN EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID('RedGate.FeedbackAuditSummary')
+    AND name = 'CustomerID'
+  ) THEN 'CustomerID STILL EXISTS (FAILED)'
+  ELSE 'CustomerID RENAMED (SUCCESS)' END AS customerid_column_status;
+
+-- 5) Test modified view query
+SELECT COUNT(*) AS view_row_count
+FROM RedGate.FeedbackAuditSummary;
+
+-- 6) Sample data from modified view (should show AuditID, CustID, CreatedAt)
+SELECT TOP (5) *
+FROM RedGate.FeedbackAuditSummary
+ORDER BY AuditID DESC;
+
+-- 7) Modified function exists
+SELECT
+  s.name AS schema_name,
+  o.name AS function_name,
+  o.type_desc,
+  o.create_date,
+  o.modify_date
+FROM sys.objects o
+JOIN sys.schemas s ON s.schema_id = o.schema_id
+WHERE s.name = 'RedGate'
+  AND o.name = 'count_recent_audits'
+  AND o.type IN ('FN', 'IF', 'TF');
+
+-- 8) Function definition (should show updated SQL Server syntax)
+SELECT
+  OBJECT_NAME(object_id) AS function_name,
+  definition
+FROM sys.sql_modules
+WHERE object_id = OBJECT_ID('RedGate.count_recent_audits');
+
+-- 9) Test modified function
+SELECT
+  'Modified Function Test - 7 days' AS test_description,
+  RedGate.count_recent_audits(7) AS function_result,
+  (SELECT COUNT(*)
+   FROM RedGate.FeedbackAudit
+   WHERE CreatedAt > DATEADD(DAY, -7, SYSDATETIMEOFFSET())) AS direct_count;
+
+-- 10) Verify function still works correctly with different parameters
+SELECT
+  'Modified Function Test - 30 days' AS test_description,
+  RedGate.count_recent_audits(30) AS function_result,
+  (SELECT COUNT(*)
+   FROM RedGate.FeedbackAudit
+   WHERE CreatedAt > DATEADD(DAY, -30, SYSDATETIMEOFFSET())) AS direct_count;
+
+-- 11) View definition showing the column alias
+SELECT
+  OBJECT_NAME(object_id) AS view_name,
+  definition
+FROM sys.sql_modules
+WHERE object_id = OBJECT_ID('RedGate.FeedbackAuditSummary');
+
+-- 12) Compare base table vs modified view columns
+SELECT 'Base Table Columns' AS source, c.name AS column_name
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAudit')
+UNION ALL
+SELECT 'Modified View Columns' AS source, c.name AS column_name
+FROM sys.columns c
+WHERE c.object_id = OBJECT_ID('RedGate.FeedbackAuditSummary')
+ORDER BY source, column_name;
+
+-- 13) Liquibase history for modify-objects folder
+SELECT
+  ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, EXECTYPE
+FROM dbo.DATABASECHANGELOG
+WHERE FILENAME LIKE '%/liquibase/sql/modify-objects/%'
+ORDER BY DATEEXECUTED DESC;
+
+-- 14) Liquibase lock state (should be unlocked)
+SELECT * FROM dbo.DATABASECHANGELOGLOCK;
+```
+
+### Modify Objects Expected Results:
+
+1. **Schema Metadata**: RedGate schema should have extended property 'Liquibase SQL Server test schema (updated)'
+2. **View Modification**: RedGate.FeedbackAuditSummary should show:
+   - AuditID column (unchanged)
+   - CustID column (renamed from CustomerID)
+   - CreatedAt column (unchanged)
+3. **Function Update**: RedGate.count_recent_audits should:
+   - Use updated SQL Server syntax
+   - Return same results as before modification
+   - Have updated modify_date
+4. **Data Consistency**: All data should remain accessible through modified objects
+5. **Liquibase**: All changesets executed successfully:
+   - `VSQL9-modify-schema-comment` (schema extended property)
+   - `VSQL10-modify-view-drop` (drop view)
+   - `VSQL10-modify-view-create` (recreate view with column alias)
+   - `VSQL11-modify-func-drop` (drop function)
+   - `VSQL11-modify-func-count_recent_audits` (recreate function)
+
+### Key Modify Objects Verification Points:
+
+- Schema has proper extended property (SQL Server comment equivalent)
+- View column renamed: CustomerID → CustID via alias
+- View returns correct data with new column name
+- Function recreated with updated SQL Server syntax
+- Function results match previous version
+- All objects have updated modify_date timestamps
+- No data loss or corruption in any objects

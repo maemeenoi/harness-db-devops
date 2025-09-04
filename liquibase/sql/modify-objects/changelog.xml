@@ -1,0 +1,79 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
+
+  <!-- VSQL9: modify schema (add extended property as SQL Server equivalent of comment) -->
+  <changeSet id="VSQL9-modify-schema-comment" author="redgate">
+    <sql><![CDATA[
+      -- Add or update extended property on schema (SQL Server equivalent of schema comment)
+      IF EXISTS (SELECT * FROM sys.extended_properties WHERE major_id = SCHEMA_ID('RedGate') AND name = 'MS_Description')
+      BEGIN
+        EXEC sys.sp_updateextendedproperty 
+          @name = N'MS_Description',
+          @value = N'Liquibase SQL Server test schema (updated)',
+          @level0type = N'SCHEMA',
+          @level0name = N'RedGate'
+      END
+      ELSE
+      BEGIN
+        EXEC sys.sp_addextendedproperty 
+          @name = N'MS_Description',
+          @value = N'Liquibase SQL Server test schema (updated)',
+          @level0type = N'SCHEMA',
+          @level0name = N'RedGate'
+      END
+    ]]></sql>
+  </changeSet>
+
+  <changeSet id="VSQL10-modify-view-drop" author="redgate">
+    <sql>
+      <![CDATA[
+      IF EXISTS (SELECT * FROM sys.views WHERE object_id = OBJECT_ID(N'RedGate.FeedbackAuditSummary'))
+      BEGIN
+        DROP VIEW RedGate.FeedbackAuditSummary
+      END
+      ]]>
+    </sql>
+  </changeSet>
+
+  <changeSet id="VSQL10-modify-view-create" author="redgate">
+    <sql splitStatements="false">
+      <![CDATA[
+      CREATE VIEW RedGate.FeedbackAuditSummary AS
+      SELECT AuditID, CustomerID AS CustID, CreatedAt
+      FROM RedGate.FeedbackAudit;
+      ]]>
+    </sql>
+  </changeSet>
+
+  <!-- VSQL11: modify function (drop and recreate with updated logic) -->
+  <changeSet id="VSQL11-modify-func-drop" author="redgate">
+    <sql>
+      <![CDATA[
+      IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'RedGate.count_recent_audits') AND type in (N'FN', N'IF', N'TF'))
+      BEGIN
+        DROP FUNCTION RedGate.count_recent_audits
+      END
+      ]]>
+    </sql>
+  </changeSet>
+
+  <changeSet id="VSQL11-modify-func-count_recent_audits" author="redgate">
+    <sql splitStatements="false"><![CDATA[
+      CREATE FUNCTION RedGate.count_recent_audits(@p_days INT)
+      RETURNS INT
+      AS
+      BEGIN
+        DECLARE @v_count INT;
+        
+        -- Updated logic: same functionality but clearer SQL Server syntax
+        SELECT @v_count = COUNT(*)
+        FROM RedGate.FeedbackAudit a
+        WHERE a.CreatedAt > DATEADD(DAY, -@p_days, SYSDATETIMEOFFSET());
+        
+        RETURN @v_count;
+      END
+    ]]></sql>
+  </changeSet>
+</databaseChangeLog>
