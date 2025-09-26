@@ -1,1 +1,0 @@
-ALTER TABLE RedGate.FeedbackAudit ADD Source NVARCHAR(50);
