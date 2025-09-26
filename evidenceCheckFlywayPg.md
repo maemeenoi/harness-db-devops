@@ -371,8 +371,9 @@ WHERE sequence_schema = 'redgate';
 
 ### Migration V7 (Drop Column):
 
-- View updated to remove `note` column reference first (to handle dependencies)
+- View dropped completely to remove dependency on `note` column
 - `note` column should be removed from feedbackaudit table
+- View recreated without `note` column reference
 
 ### Migration V8 (Schema Comment):
 
