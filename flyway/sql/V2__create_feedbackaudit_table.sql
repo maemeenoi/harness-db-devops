@@ -1,5 +1,6 @@
 CREATE TABLE RedGate.FeedbackAudit (
     AuditID INT IDENTITY(1,1) PRIMARY KEY,
     CustomerID INT NOT NULL,
-    Note NVARCHAR(255) NULL
+    Note NVARCHAR(255) NULL,
+    CreatedAt DATETIME NOT NULL DEFAULT GETDATE()
 );

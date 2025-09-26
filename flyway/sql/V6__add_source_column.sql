@@ -1,1 +1,2 @@
-ALTER TABLE RedGate.FeedbackAudit ADD Source NVARCHAR(50);
+ALTER TABLE RedGate.FeedbackAudit
+ADD Source NVARCHAR(50) NULL;
