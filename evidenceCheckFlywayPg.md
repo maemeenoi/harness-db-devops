@@ -234,12 +234,22 @@ SELECT
 FROM pg_namespace
 WHERE nspname = 'redgate';
 
--- 22) View modifications (V9) - check current definition
+-- 22) View modifications (V9) - check current definition and comment
 SELECT
   table_name,
   view_definition
 FROM information_schema.views
 WHERE table_schema = 'redgate' AND table_name = 'feedbackauditsummary';
+
+-- 22b) View comment (V9)
+SELECT
+  schemaname,
+  viewname,
+  obj_description(c.oid, 'pg_class') AS view_comment
+FROM pg_views v
+JOIN pg_class c ON c.relname = v.viewname
+JOIN pg_namespace n ON c.relnamespace = n.oid
+WHERE v.schemaname = 'redgate' AND v.viewname = 'feedbackauditsummary';
 
 -- ==========================================
 -- Function Modifications Evidence (V10)
@@ -361,6 +371,7 @@ WHERE sequence_schema = 'redgate';
 
 ### Migration V7 (Drop Column):
 
+- View updated to remove `note` column reference first (to handle dependencies)
 - `note` column should be removed from feedbackaudit table
 
 ### Migration V8 (Schema Comment):
@@ -369,7 +380,8 @@ WHERE sequence_schema = 'redgate';
 
 ### Migration V9 (View Modification):
 
-- View definition should reflect any structural changes from column modifications
+- View comment should be added/updated
+- View definition should be consistent and reflect final structure
 
 ### Migration V10 (Function Modification):
 
