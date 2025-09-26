@@ -1,0 +1,1 @@
+CREATE VIEW RedGate.FeedbackAuditSummary AS SELECT AuditID, CustomerID, Note, CreatedAt FROM RedGate.FeedbackAudit;

@@ -1,0 +1,1 @@
+-- Schema comments not supported in SQL Server, simulated change

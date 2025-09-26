@@ -1,0 +1,1 @@
+CREATE PROCEDURE RedGate.GetRecentAudits AS SELECT TOP 10 * FROM RedGate.FeedbackAudit ORDER BY CreatedAt DESC;

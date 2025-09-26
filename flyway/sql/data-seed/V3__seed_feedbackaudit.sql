@@ -1,0 +1,1 @@
+INSERT INTO RedGate.FeedbackAudit (CustomerID, Note) VALUES (1001, 'Seed row 1');

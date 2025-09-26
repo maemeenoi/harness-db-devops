@@ -1,0 +1,1 @@
+CREAT TABL invalid_syntax (id int);
