@@ -1,50 +1,63 @@
 # harness-db-devops
 
-Monorepo for Harness database DevOps demos
+Monorepo for Harness Database DevOps demos with **Liquibase** and **Flyway**, covering both **SQL Server** and **PostgreSQL**.
 
 ## Directory Structure
 
 ### Flyway Migrations
 
-- `flyway/pg/` — Flyway migrations for PostgreSQL
 - `flyway/sql/` — Flyway migrations for SQL Server
+- `flyway/pg/` — Flyway migrations for PostgreSQL
 
 Each engine has scenario-based migration files:
 
-- `baseline/` — `V1__baseline.sql` (initial schema setup)
-- `schema/` — `V2__schema.sql` (schema changes)
-- `proc/` — `V3__proc.sql` (stored procedures)
-- `failure/` — `V4__failure.sql` (failure scenarios)
-
-### Liquibase Changelogs
-
-- `liquibase/pg/` — Liquibase changelogs for PostgreSQL
-- `liquibase/sql/` — Liquibase changelogs for SQL Server
-
-Each engine has scenario-based changelog folders:
-
-- `schema/` — Schema and table creation
+- `schema/` — Schema and table creation (baseline setup)
 - `data-seed/` — Data seeding operations
-- `view/` — View creation and modifications
+- `view/` — Create or modify views
 - `function/` — User-defined functions
 - `proc/` — Stored procedures
 - `drop-column/` — Column removal operations
 - `modify-objects/` — Object modifications (schema comments, view updates, function changes)
 - `failure/` — Intentional failure scenarios for error handling testing
 
-Each scenario folder contains a `changelog.xml` file with database-specific SQL.
+### Liquibase Changelogs
+
+- `liquibase/sql/` — Liquibase changelogs for SQL Server
+- `liquibase/pg/` — Liquibase changelogs for PostgreSQL
+
+Each engine has scenario-based changelog folders:
+
+- `schema/` — Schema and table creation
+- `data-seed/` — Data seeding operations
+- `view/` — Create or modify views
+- `function/` — User-defined functions
+- `proc/` — Stored procedures
+- `drop-column/` — Column removal operations
+- `modify-objects/` — Object modifications (schema comments, view updates, function changes)
+- `failure/` — Intentional failure scenarios for error handling testing
+
+Each scenario folder contains a `changelog.xml` (Liquibase) or `Vx__migration.sql` (Flyway).
+
+---
 
 ## Evidence Documentation
 
 - `evidenceCheckFlyway.md` — PostgreSQL Flyway migration evidence scripts
-- `evidenceCheckLiqiPg.md` — PostgreSQL Liquibase migration evidence scripts
+- `evidenceCheckLiquiPg.md` — PostgreSQL Liquibase migration evidence scripts
 - `evidenceCheckLiquiSql.md` — SQL Server Liquibase migration evidence scripts
 
-These files contain comprehensive SQL queries to verify successful migrations and test database functionality.
+These files contain SQL queries to validate that migrations executed correctly, including schema objects, data consistency, and changelog entries.
+
+---
 
 ## Database Changelog Tracking
 
-- `databasechangelog.csv` — Sample Liquibase changelog data
+- **Liquibase** tracks state in the `databasechangelog` table
+- **Flyway** tracks state in the `flyway_schema_history` table
+
+Both provide full audit history of applied migrations.
+
+---
 
 ## Usage
 
@@ -77,55 +90,76 @@ liquibase update --changelog-file=liquibase/sql/failure/changelog.xml
 liquibase update --changelog-file=liquibase/pg/<scenario>/changelog.xml
 ```
 
+---
+
 ### Flyway
 
 **SQL Server:**
 
 ```bash
-# Point Flyway CLI to SQL Server scenario folder
-flyway migrate -locations=filesystem:flyway/sql/<scenario>/
+# Run schema creation
+flyway migrate -locations=filesystem:flyway/sql/schema
+
+# Run other scenarios
+flyway migrate -locations=filesystem:flyway/sql/data-seed
+flyway migrate -locations=filesystem:flyway/sql/view
 ```
 
 **PostgreSQL:**
 
 ```bash
-# Point Flyway CLI to PostgreSQL scenario folder
-flyway migrate -locations=filesystem:flyway/pg/<scenario>/
+# Run schema creation
+flyway migrate -locations=filesystem:flyway/pg/schema
+
+# Run other scenarios
+flyway migrate -locations=filesystem:flyway/pg/data-seed
+flyway migrate -locations=filesystem:flyway/pg/view
 ```
+
+---
 
 ## Key Features
 
+### Scenario Parity
+
+- Same test cases across Liquibase and Flyway for **apples-to-apples comparison**
+- Includes schema, data, views, stored procs, functions, drop-column, modify-objects, and failure cases
+
 ### SQL Server Conversions
 
-All SQL Server Liquibase changelogs have been converted from PostgreSQL syntax to use:
-
-- T-SQL syntax and data types (`INT`, `BIGINT`, `DATETIMEOFFSET`)
-- SQL Server functions (`DATEADD`, `SYSDATETIMEOFFSET`)
-- SQL Server object management (conditional `DROP`/`CREATE` patterns)
+- T-SQL syntax (`INT`, `BIGINT`, `DATETIMEOFFSET`)
+- Functions like `DATEADD`, `SYSDATETIMEOFFSET`
+- Conditional `IF EXISTS` checks
 - Extended properties for schema metadata
+
+### PostgreSQL Coverage
+
+- `plpgsql` functions
+- `COMMENT ON SCHEMA` for schema metadata
+- Proper interval handling for time-based logic
 
 ### Error Handling
 
-The `failure/` scenarios test Liquibase error handling with:
-
-- `failOnError="true"` settings
-- `onFail="MARK_RAN"` recovery strategies
-- Duplicate object creation attempts
+- `failure/` scenarios designed to trigger controlled errors
+- Liquibase uses `onFail="MARK_RAN"` for recovery
+- Flyway stops migration until fixed
 
 ### Evidence Validation
 
-Each migration type includes comprehensive evidence scripts to verify:
+Each migration type includes evidence scripts to confirm:
 
-- Object creation and structure
-- Data integrity and consistency
-- Functional testing of database objects
-- Liquibase changelog tracking
-- Error recovery and system stability
+- Schema and table creation
+- Data seeding and consistency
+- Function/proc logic
+- Changelog history updates
+- Error capture and rollback safety
+
+---
 
 ## Notes
 
-- All Liquibase SQL Server changelogs use proper T-SQL syntax
-- Each scenario is self-contained and can be run independently
-- Evidence scripts provide comprehensive validation of migration success
-- The repository demonstrates both successful migrations and failure handling
-- Folder structure enables easy comparison between Liquibase and Flyway approaches
+- Liquibase uses XML changelogs, Flyway uses raw SQL scripts
+- Both SQL Server and PostgreSQL are fully covered
+- All scenarios are modular and independently executable
+- Evidence scripts provide confidence in migration outcomes
+- The structure allows Harness pipelines to trigger by scenario folders for CI/CD automation
