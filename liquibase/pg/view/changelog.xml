@@ -3,11 +3,11 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
   <!-- VPG4: create view -->
-  <changeSet id="VPG4-create-view-feedback_audit_summary" author="redgate">
+  <changeSet id="VPG4-create-view-feedback_audit_summary" author="makestuffgo">
     <sql><![CDATA[
-      CREATE OR REPLACE VIEW redgate.feedback_audit_summary AS
+      CREATE OR REPLACE VIEW makestuffgo.feedback_audit_summary AS
       SELECT audit_id, customer_id, created_at
-      FROM redgate.feedback_audit;
+      FROM makestuffgo.feedback_audit;
     ]]></sql>
   </changeSet>
 </databaseChangeLog>

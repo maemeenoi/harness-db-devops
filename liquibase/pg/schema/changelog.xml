@@ -3,19 +3,19 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-  <!-- VPG1: create schema redgate -->
-<changeSet id="VPG1-create-schema-redgate" author="redgate">
+  <!-- VPG1: create schema makestuffgo -->
+<changeSet id="VPG1-create-schema-makestuffgo" author="makestuffgo">
   <sql>
     <![CDATA[
-      CREATE SCHEMA IF NOT EXISTS redgate AUTHORIZATION CURRENT_USER;
+      CREATE SCHEMA IF NOT EXISTS makestuffgo AUTHORIZATION CURRENT_USER;
     ]]>
   </sql>
 </changeSet>
 
-  <!-- VPG2: create table redgate.feedback_audit -->
-  <changeSet id="VPG2-create-table-feedback_audit" author="redgate">
+  <!-- VPG2: create table makestuffgo.feedback_audit -->
+  <changeSet id="VPG2-create-table-feedback_audit" author="makestuffgo">
     <sql><![CDATA[
-      CREATE TABLE IF NOT EXISTS redgate.feedback_audit (
+      CREATE TABLE IF NOT EXISTS makestuffgo.feedback_audit (
         audit_id    BIGSERIAL PRIMARY KEY,
         customer_id INTEGER,
         note        VARCHAR(200),

@@ -3,10 +3,10 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
-  <changeSet id="VPG5-create-func-count_recent_audits" author="redgate">
+  <changeSet id="VPG5-create-func-count_recent_audits" author="makestuffgo">
     <sql splitStatements="false">
       <![CDATA[
-      CREATE OR REPLACE FUNCTION redgate.count_recent_audits(p_days integer)
+      CREATE OR REPLACE FUNCTION makestuffgo.count_recent_audits(p_days integer)
       RETURNS integer
       LANGUAGE plpgsql
       AS $$
@@ -14,7 +14,7 @@
         v_count integer;
       BEGIN
         SELECT COUNT(*) INTO v_count
-        FROM redgate.feedback_audit a
+        FROM makestuffgo.feedback_audit a
         WHERE a.created_at > now() - (p_days || ' days')::interval;
         RETURN v_count;
       END

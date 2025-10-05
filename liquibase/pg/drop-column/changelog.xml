@@ -4,19 +4,19 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
   <!-- VPG7: ensure view excludes note -->
-  <changeSet id="VPG7-update-view-no-note" author="redgate">
+  <changeSet id="VPG7-update-view-no-note" author="makestuffgo">
     <sql><![CDATA[
-      CREATE OR REPLACE VIEW redgate.feedback_audit_summary AS
+      CREATE OR REPLACE VIEW makestuffgo.feedback_audit_summary AS
       SELECT audit_id, customer_id, created_at
-      FROM redgate.feedback_audit;
+      FROM makestuffgo.feedback_audit;
     ]]></sql>
   </changeSet>
 
   <!-- VPG8: drop column note -->
-  <changeSet id="VPG8-drop-column-note" author="redgate">
+  <changeSet id="VPG8-drop-column-note" author="makestuffgo">
     <preConditions onFail="MARK_RAN">
-      <columnExists schemaName="redgate" tableName="feedback_audit" columnName="note"/>
+      <columnExists schemaName="makestuffgo" tableName="feedback_audit" columnName="note"/>
     </preConditions>
-    <dropColumn schemaName="redgate" tableName="feedback_audit" columnName="note"/>
+    <dropColumn schemaName="makestuffgo" tableName="feedback_audit" columnName="note"/>
   </changeSet>
 </databaseChangeLog>

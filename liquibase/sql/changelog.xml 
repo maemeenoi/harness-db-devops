@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd">
+
+    <!-- Baseline schema -->
+    <include file="schema/changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Stored procedures -->
+    <include file="proc/changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Functions -->
+    <include file="function/changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Views -->
+    <include file="view/changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Data seed -->
+    <include file="data-seed/changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Modify objects (alter tables, etc.) -->
+    <include file="modify-objects/changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Drop columns -->
+    <include file="drop-column/changelog.xml" relativeToChangelogFile="true"/>
+
+    <!-- Failure scenarios (for testing) -->
+    <include file="failure/changelog.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>

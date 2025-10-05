@@ -4,8 +4,8 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.24.xsd">
 
   <!-- VSQLX: intentionally add a column that already exists to force an error -->
-  <changeSet id="VSQLX-duplicate-add-column" author="redgate" failOnError="true">
-    <sql onFail="MARK_RAN"><![CDATA[
+  <changeSet id="VSQLX-duplicate-add-column" author="redgate" failOnError="true" onFail="MARK_RAN">
+    <sql><![CDATA[
       ALTER TABLE RedGate.FeedbackAudit ADD CreatedAt DATETIMEOFFSET;
     ]]></sql>
   </changeSet>
