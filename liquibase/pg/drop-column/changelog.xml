@@ -12,6 +12,7 @@
     ]]></sql>
   </changeSet>
 
+
   <!-- VPG8: drop column note -->
   <changeSet id="VPG8-drop-column-note" author="makestuffgo">
     <preConditions onFail="MARK_RAN">
